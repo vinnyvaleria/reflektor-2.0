@@ -1,8 +1,20 @@
-/** @type {import('tailwindcss').Config} */
-export default {
+module.exports = {
 	content: ['./src/**/*.{html,js,svelte,ts}'],
 	theme: {
-		extend: {}
+		extend: {
+			colors: {
+				primary: '#ff2d55',
+				secondary: '#9c0a26',
+				blue: '#00639a',
+				green: '#5ce65c',
+				dark: '#5e0a0a',
+				light: '#f5f5dc'
+			},
+			fontFamily: {
+				jersey: ['Jersey 10', 'sans-serif'],
+				pixelify: ['Pixelify Sans', 'sans-serif']
+			}
+		}
 	},
 	plugins: []
 };
