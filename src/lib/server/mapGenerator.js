@@ -18,7 +18,7 @@ export class MapGenerator {
 
 		return {
 			mainMap: map,
-			mirroredMap: map, // placeholder; real mirroring later
+			mirroredMap: this.mirrorMap(map),
 			metadata: {
 				size,
 				difficulty,
@@ -146,7 +146,12 @@ export class MapGenerator {
 
 		return false;
 	}
+
+	static mirrorMap(map) {
+		return map.map((row) => [...row].reverse());
+	}
 }
 
 // console.log(MapGenerator.createEmptyMap(3));
-console.log(MapGenerator.generate('MEDIUM'));
+console.log(MapGenerator.generate('EASY'));
+// console.log(MapGenerator.generate('MEDIUM'));
