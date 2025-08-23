@@ -1,3 +1,5 @@
+import { fontFamily } from 'tailwindcss/defaultTheme';
+
 module.exports = {
 	content: ['./src/**/*.{html,js,jsx,svelte,ts,tsx}'],
 	theme: {
@@ -11,6 +13,7 @@ module.exports = {
 				light: '#f5f5dc'
 			},
 			fontFamily: {
+				sans: [...fontFamily.sans],
 				jersey: ['Jersey 10', 'sans-serif'],
 				pixelify: ['Pixelify Sans', 'sans-serif']
 			}
