@@ -3,14 +3,26 @@ export class MapGenerator {
 		const sizes = { EASY: 5, MEDIUM: 7, HARD: 9 };
 		const size = sizes[difficulty];
 
-		const map = this.createRandomMap(size);
+		// use BFS to make sure the map generated is solvable
+		// after 20 attempts of BFS and not solved, use simple map generator instead
+		let map,
+			attempts = 0;
+		do {
+			map = this.createRandomMap(size);
+			attempts++;
+		} while (!this.hasValidPath(map) && attempts < 20);
+
+		if (attempts >= 50) {
+			map = this.createSimpleMap(size);
+		}
 
 		return {
 			mainMap: map,
 			mirroredMap: map, // placeholder; real mirroring later
 			metadata: {
 				size,
-				difficulty
+				difficulty,
+				attempts
 			}
 		};
 	}
@@ -72,7 +84,69 @@ export class MapGenerator {
 
 		return map;
 	}
+
+	// check for valid path within map generation
+	static hasValidPath(map) {
+		const size = map.length;
+		let start = null,
+			end = null;
+
+		// find start (2) and end (3) positions
+		for (let row = 0; row < size; row++) {
+			for (let col = 0; col < size; col++) {
+				if (map[row][col] === 2) start = { row, col };
+				if (map[row][col] === 3) end = { row, col };
+			}
+		}
+
+		// when start and end not found
+		if (!start || !end) return false;
+
+		// BFS pathfinding to ensure solvable - FIFO
+		const visited = Array(size)
+			.fill(0)
+			.map(() => Array(size).fill(false));
+		const queue = [start];
+		visited[start.row][start.col] = true;
+
+		const directions = [
+			{ row: -1, col: 0 }, // up
+			{ row: 1, col: 0 }, // down
+			{ row: 0, col: -1 }, // left
+			{ row: 0, col: 1 } // right
+		];
+
+		while (queue.length > 0) {
+			const current = queue.shift();
+
+			// if the current location is equal to end, return true - there is valid path
+			if (current.row === end.row && current.col === end.col) {
+				return true;
+			}
+
+			for (const dir of directions) {
+				const newRow = current.row + dir.row;
+				const newCol = current.col + dir.col;
+
+				// to check if it is within grid,
+				// not visited yet and not an obstacle (either content is 0 or 3)
+				if (
+					newRow >= 0 &&
+					newRow < size &&
+					newCol >= 0 &&
+					newCol < size &&
+					!visited[newRow][newCol] &&
+					(map[newRow][newCol] === 0 || map[newRow][newCol] === 3)
+				) {
+					visited[newRow][newCol] = true;
+					queue.push({ row: newRow, col: newCol });
+				}
+			}
+		}
+
+		return false;
+	}
 }
 
 // console.log(MapGenerator.createEmptyMap(3));
-console.log(MapGenerator.generate('EASY'));
+console.log(MapGenerator.generate('MEDIUM'));
