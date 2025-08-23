@@ -22,7 +22,8 @@ export class MapGenerator {
 			metadata: {
 				size,
 				difficulty,
-				attempts
+				attempts,
+				obstacles: this.countObstacles(map)
 			}
 		};
 	}
@@ -149,6 +150,21 @@ export class MapGenerator {
 
 	static mirrorMap(map) {
 		return map.map((row) => [...row].reverse());
+	}
+
+	static countObstacles(map) {
+		return map.flat().filter((cell) => cell === 1).length;
+	}
+
+	static getPlayerPosition(map) {
+		for (let row = 0; row < map.length; row++) {
+			for (let col = 0; col < map[row].length; col++) {
+				if (map[row][col] === 2) {
+					return { row, col };
+				}
+			}
+		}
+		return null;
 	}
 }
 
