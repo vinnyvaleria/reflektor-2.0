@@ -6,10 +6,43 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../../generated/prisma"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite" // this will be updated to postgresql right before deployment
   url      = env("DATABASE_URL")
+}
+
+// game session schema -> one session completed = one submission to global leaderboard
+model GameSession {
+  id              String       @id @default(cuid())
+  playerName      String?      // optional name for leaderboard
+  mapData         Json         // main grid data
+  mirroredMapData Json         // mirrored grid data
+  currentPosition Json         // player position {row, col, mirroredCol}
+  roundsUsed      Int          @default(0)
+  stepsCount      Int          @default(0)
+  helperUsage     Json         @default("[]")  // used helpers
+  timeTaken       Int?         // seconds to complete
+  score           Int?         // calculated final score
+  startTime       DateTime     @default(now())
+  endTime         DateTime?
+  status          GameStatus   @default(PLAYING)
+  difficulty      Difficulty   @default(EASY)
+  createdAt       DateTime     @default(now())
+  
+  @@map("game_sessions")
+}
+
+enum GameStatus {
+  PLAYING
+  WON
+  LOST
+  PAUSED
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
 }
