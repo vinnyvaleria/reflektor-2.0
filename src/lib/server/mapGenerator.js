@@ -51,6 +51,27 @@ export class MapGenerator {
 
 		return map;
 	}
+
+	// in case random map is too hard - create solvable simple map
+	static createSimpleMap(size) {
+		// fallback guaranteed solvable map
+		const map = this.createEmptyMap(size);
+
+		// player at bottom-left
+		map[size - 1][0] = 2;
+
+		// goal at top-right
+		map[0][size - 1] = 3;
+
+		// add some obstacles but keep a clear path
+		for (let i = 1; i < size - 1; i++) {
+			if (Math.random() > 0.6) {
+				map[i][Math.floor(size / 2)] = 1;
+			}
+		}
+
+		return map;
+	}
 }
 
 // console.log(MapGenerator.createEmptyMap(3));
