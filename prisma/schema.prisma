@@ -1,69 +1,30 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite" // this will be updated to postgresql right before deployment
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
-// user schema
-model User {
-  id              String        @id @default(cuid())
-  username        String        @unique
-  email           String        @unique
-  password        String
-  totalGamesPlayed Int          @default(0)
-  bestRound       Int?
-  bestTime        Int?
-  totalSteps      Int          @default(0)
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-  
-  @@map("users")
-}
-
-
-// game session schema -> one session completed = one submission to global leaderboard
 model GameSession {
-  id              String       @id @default(cuid())
-  playerName      String?      // optional name for leaderboard
-  mapData         Json         // main grid data
-  mirroredMapData Json         // mirrored grid data
-  currentPosition Json         // player position {row, col, mirroredCol}
-  roundsUsed      Int          @default(0)
-  stepsCount      Int          @default(0)
-  helperUsage     Json         @default("[]")  // used helpers
-  timeTaken       Int?         // seconds to complete
-  score           Int?         // calculated final score
-  startTime       DateTime     @default(now())
+  id              String     @id @default(cuid())
+  playerName      String?
+  mapData         Json
+  mirroredMapData Json
+  currentPosition Json
+  roundsUsed      Int        @default(0)
+  stepsCount      Int        @default(0)
+  helperUsage     Json       @default("[]")
+  timeTaken       Int?
+  score           Int?
+  startTime       DateTime   @default(now())
   endTime         DateTime?
-  status          GameStatus   @default(PLAYING)
-  difficulty      Difficulty   @default(EASY)
-  createdAt       DateTime     @default(now())
-  
-  @@map("game_sessions")
-}
+  status          GameStatus @default(PLAYING)
+  difficulty      Difficulty @default(EASY)
+  createdAt       DateTime   @default(now())
 
-// leaderboard schema
-model Leaderboard {
-  id            String       @id @default(cuid())
-  userId        String
-  gameSessionId String       @unique
-  roundsUsed    Int
-  timeTaken     Int
-  stepsCount    Int
-  difficulty    Difficulty
-  score         Int
-  createdAt     DateTime     @default(now())
-  
-  @@map("leaderboard")
+  @@map("game_sessions")
 }
 
 enum GameStatus {
