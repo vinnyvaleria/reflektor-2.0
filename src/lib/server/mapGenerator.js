@@ -34,6 +34,21 @@ export class MapGenerator {
 		const goalCol = Math.floor(size * 0.6) + Math.floor(Math.random() * Math.floor(size * 0.4));
 		map[goalRow][goalCol] = 3;
 
+		// add obstacles (20-30% coverage for better playability)
+		const totalCells = size * size;
+		const obstacleCount = Math.floor(totalCells * (0.2 + Math.random() * 0.1));
+
+		let placed = 0;
+		while (placed < obstacleCount) {
+			const row = Math.floor(Math.random() * size);
+			const col = Math.floor(Math.random() * size);
+
+			if (map[row][col] === 0) {
+				map[row][col] = 1;
+				placed++;
+			}
+		}
+
 		return map;
 	}
 }
