@@ -1,16 +1,16 @@
 import { fontFamily } from 'tailwindcss/defaultTheme';
 
 module.exports = {
-	content: ['./src/**/*.{html,js,jsx,svelte,ts,tsx}'],
+	content: ['./src/**/*.{html,js,svelte,ts}'],
 	theme: {
 		extend: {
 			colors: {
-				primary: '#ff2d55',
-				secondary: '#9c0a26',
-				blue: '#00639a',
-				green: '#5ce65c',
-				dark: '#5e0a0a',
-				light: '#f5f5dc'
+				'game-primary': '#ff2d55',
+				'game-secondary': '#9c0a26',
+				'game-blue': '#00639a',
+				'game-green': '#5ce65c',
+				'game-dark': '#5e0a0a',
+				'game-light': '#f5f5dc'
 			},
 			fontFamily: {
 				sans: [...fontFamily.sans],
