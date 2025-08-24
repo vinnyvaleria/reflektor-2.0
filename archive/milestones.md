@@ -8,13 +8,13 @@
 
 #### 🅿️ Planned Tasks:
 
-- [ ] Clean up project structure (remove backend folder)
-- [ ] Set up local .env with SQLite
-- [ ] Create simplified Prisma schema (Game data only, no User initially)
-- [ ] Run `npx prisma migrate dev --name init`
-- [ ] Create map generator (`src/lib/server/mapGenerator.js`)
-- [ ] Create game start API (`src/routes/api/game/start/+server.js`)
-- [ ] Test map generation with `npx prisma studio`
+- [x] Clean up project structure (remove backend folder)
+- [x] Set up local .env with SQLite
+- [x] Create simplified Prisma schema (Game data only, no User initially)
+- [x] Run `npx prisma migrate dev --name init`
+- [x] Create map generator (`src/lib/server/mapGenerator.js`)
+- [x] Create game start API (`src/routes/api/game/start/+server.js`)
+- [x] Test map generation with `npx prisma studio`
 
 **✅ Day 1 Success Criteria:**
 
