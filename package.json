@@ -48,5 +48,8 @@
 		"jose": "^6.0.13",
 		"vite-plugin-devtools-json": "^1.0.0",
 		"zod": "^4.0.17"
+	},
+	"prisma": {
+		"seed": "node prisma/seed.js"
 	}
 }

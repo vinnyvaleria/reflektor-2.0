@@ -1,5 +1,4 @@
 <!-- src/routes/test-apis/+page.svelte -->
-<!-- src/routes/test-apis/+page.svelte -->
 
 <script>
 	import '../../app.css';
