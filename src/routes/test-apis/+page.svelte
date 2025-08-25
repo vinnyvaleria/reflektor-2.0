@@ -1,4 +1,7 @@
 <script>
+	import { freeplayApis } from '$lib/services/freeplayApis';
+	import { gameApis } from '$lib/services/gameApis';
+	import { storyApis } from '$lib/services/storyApis';
 	import '../../app.css';
 
 	let results = '';
@@ -12,11 +15,10 @@
 			console.log('🎲 Starting Freeplay Test...');
 
 			// 1. Start a freeplay game
-			const startResponse = await fetch('/api/freeplay/start', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ difficulty: 'EASY', playerName: 'test-flow' })
-			});
+			const { response: startResponse, data: gameData } = await freeplayApis.start(
+				'EASY',
+				'freeplay-test'
+			);
 
 			if (!startResponse.ok) {
 				throw new Error(
@@ -24,7 +26,6 @@
 				);
 			}
 
-			const gameData = await startResponse.json();
 			console.log('✅ Game started:', gameData.gameSession.id);
 
 			let testResults = {
@@ -40,13 +41,10 @@
 			for (const direction of moves) {
 				console.log(`🎯 Testing move: ${direction}`);
 
-				const moveResponse = await fetch('/api/game/move', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ gameSessionId: sessionId, direction })
-				});
-
-				const moveData = await moveResponse.json();
+				const { response: moveResponse, data: moveData } = await gameApis.move(
+					sessionId,
+					direction
+				);
 
 				if (moveResponse.ok) {
 					console.log(`✅ Move successful - Steps: ${moveData.gameSession.totalSteps}`);
@@ -82,28 +80,16 @@
 		try {
 			console.log('📖 Starting Story Test...');
 
-			const response = await fetch('/api/story/start', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ level: 1, playerName: 'browser-test-story' })
-			});
+			const { response, data } = await storyApis.start(1, 'story-test');
 
 			if (!response.ok) {
 				throw new Error(`Story start failed: ${response.status} ${response.statusText}`);
 			}
-
-			const data = await response.json();
 			console.log('✅ Story mode started:', data.gameSession.id);
 
 			// 3. Test a move in story mode too
 			const sessionId = data.gameSession.id;
-			const moveResponse = await fetch('/api/game/move', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ gameSessionId: sessionId, direction: 'right' })
-			});
-
-			const moveData = await moveResponse.json();
+			const { response: moveResponse, data: moveData } = await gameApis.move(sessionId, 'up');
 
 			const testResults = {
 				gameStart: data,
@@ -129,15 +115,10 @@
 		try {
 			console.log('🗄️ Testing Database Connection...');
 
-			// Test by trying to start a game (which tests DB)
-			const response = await fetch('/api/freeplay/start', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ difficulty: 'MEDIUM', playerName: 'db-test' })
-			});
+			// 3. Test by trying to start a game (which tests DB)
+			const { response, data } = await freeplayApis.start('MEDIUM', 'db-test');
 
 			if (response.ok) {
-				const data = await response.json();
 				results = `✅ Database Connection Working!\n\nSession Created: ${data.gameSession.id}\nGame Mode: ${data.gameSession.gameMode}\nDifficulty: ${data.gameSession.difficulty}`;
 				console.log('✅ Database test passed');
 			} else {

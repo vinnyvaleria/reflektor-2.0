@@ -188,6 +188,6 @@ export async function POST({ request }) {
 		});
 	} catch (error) {
 		console.error('Move error:', error);
-		return json({ error: 'failed to process move' }, { status: 500 });
+		return json({ error: 'Failed to process move' }, { status: 500 });
 	}
 }
