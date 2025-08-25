@@ -25,3 +25,18 @@
 	font-style: normal;
 	font-display: swap;
 }
+
+/*  Home */
+.main-game-background {
+	background-image:
+		linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)),
+		url('/src/lib/assets/images/light-bg.jpg');
+	background-size: cover;
+	background-color: var(--light);
+	overflow: hidden;
+}
+
+/* Game Grid customisation */
+.custom-border-outset {
+	border-style: outset;
+}

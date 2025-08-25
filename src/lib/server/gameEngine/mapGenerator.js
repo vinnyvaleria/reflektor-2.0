@@ -16,22 +16,22 @@ export class MapGenerator {
 		const [min, max] = obstacleRanges[difficulty];
 
 		let mainMap,
-			mirroredMap,
 			attempts = 0;
 
 		// try to generate solvable maps with different obstacles
 		// use BFS to make sure the map generated is solvable
 		do {
 			mainMap = this.createRandomMap(size, min, max);
-			mirroredMap = this.createDifferentObstacleMap(mainMap);
 			attempts++;
-		} while ((!this.hasValidPath(mainMap) || !this.hasValidPath(mirroredMap)) && attempts < 20);
+		} while (!this.hasValidPath(mainMap) && attempts < 20);
 
 		// after 20 attempts of BFS and not solved, use simple map generator instead
 		if (attempts >= 20) {
 			mainMap = this.createSimpleMap(size);
-			mirroredMap = this.createSimpleMirroredMap(size);
 		}
+
+		// create mirrored version (simple horizontal flip)
+		const mirroredMap = this.mirrorMap(mainMap);
 
 		return {
 			mainMap: mainMap,
@@ -52,10 +52,10 @@ export class MapGenerator {
 	// get story mode map with different obstacles
 	static getStoryMap(level) {
 		const storyData = STORY_MAPS.find((m) => m.level === level);
-		if (!storyData) throw new Error(`story level ${level} not found`);
+		if (!storyData) throw new Error(`Story level ${level} not found`);
 
 		// create mirrored version with different obstacles
-		const mirroredMap = this.createDifferentObstacleMap(storyData.mapData);
+		const mirroredMap = this.mirrorMap(storyData.mapData);
 
 		return {
 			mainMap: storyData.mapData,
@@ -72,62 +72,9 @@ export class MapGenerator {
 		};
 	}
 
-	// create mirrored map with different obstacle pattern
-	static createDifferentObstacleMap(originalMap) {
-		const size = originalMap.length;
-		// start with flipped version to maintain player/goal positions
-		const mirroredMap = originalMap.map((row) => [...row].reverse());
-
-		// remove existing obstacles but keep player (2) and goal (3)
-		for (let row = 0; row < size; row++) {
-			for (let col = 0; col < size; col++) {
-				if (mirroredMap[row][col] === 1) {
-					mirroredMap[row][col] = 0; // clear obstacles
-				}
-			}
-		}
-
-		// add new random obstacles (same density as original)
-		const originalObstacleCount = this.countObstacles(originalMap);
-		let placed = 0;
-
-		while (placed < originalObstacleCount) {
-			const row = Math.floor(Math.random() * size);
-			const col = Math.floor(Math.random() * size);
-
-			// only place obstacle on empty cells
-			if (mirroredMap[row][col] === 0) {
-				mirroredMap[row][col] = 1;
-				placed++;
-			}
-		}
-
-		return mirroredMap;
-	}
-
-	// create simple mirrored map with different obstacles (fallback)
-	static createSimpleMirroredMap(size) {
-		const map = Array(size)
-			.fill(0)
-			.map(() => Array(size).fill(0));
-
-		// player at bottom-right (opposite of main map)
-		map[size - 1][size - 1] = 2;
-
-		// goal at top-left (opposite of main map)
-		map[0][0] = 3;
-
-		// add different obstacles pattern
-		for (let i = 1; i < size - 1; i++) {
-			if (Math.random() > 0.7) {
-				const col = Math.floor(Math.random() * size);
-				if (map[i][col] === 0) {
-					map[i][col] = 1;
-				}
-			}
-		}
-
-		return map;
+	// simple horizontal mirroring - just flip each row
+	static mirrorMap(originalMap) {
+		return originalMap.map((row) => [...row].reverse());
 	}
 
 	static createEmptyMap(size) {

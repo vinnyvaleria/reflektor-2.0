@@ -1,9 +1,9 @@
 // src/lib/utils/gameTimer.js
 // countdown timer for freeplay mode
 
-import { gameStateActions } from '$lib/stores/gameStore';
+import { gameState, gameStateActions } from '$lib/stores/gameStore';
 
-export class GameTimer {
+export class TimerUtils {
 	constructor() {
 		this.timer = null;
 	}
@@ -14,12 +14,16 @@ export class GameTimer {
 		gameStateActions.updateTimeLeft(initialTime);
 
 		this.timer = setInterval(() => {
-			gameStateActions.updateTimeLeft((timeLeft) => {
-				if (timeLeft <= 1) {
+			// get current state and update the timer
+			gameState.update((state) => {
+				const newTimeLeft = state.timeLeft <= 1 ? 0 : state.timeLeft - 1;
+
+				if (newTimeLeft === 0) {
 					this.stop();
-					return 0;
+					return { ...state, timeLeft: 0, status: 'TIME_UP' };
 				}
-				return timeLeft - 1;
+
+				return { ...state, timeLeft: newTimeLeft };
 			});
 		}, 1000);
 
