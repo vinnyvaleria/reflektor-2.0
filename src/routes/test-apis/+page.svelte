@@ -1,7 +1,7 @@
 <script>
 	import { freeplayApis } from '$lib/services/freeplayApis';
-	import { gameApis } from '$lib/services/gameApis';
 	import { storyApis } from '$lib/services/storyApis';
+	import { gameApis } from '$lib/services/gameApis';
 	import '../../app.css';
 
 	let results = '';
