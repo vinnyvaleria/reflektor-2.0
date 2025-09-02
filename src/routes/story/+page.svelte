@@ -1,11 +1,17 @@
 <script>
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { gameState, gameActions } from '$lib/stores/gameStore.js';
-	import GameGrid from '$lib/components/game/GameGrid.svelte';
-	import GameControls from '$lib/components/game/GameControls.svelte';
-	import HelperTools from '$lib/components/game/HelperTools.svelte';
-	import GameInfo from '$lib/components/game/GameInfo.svelte';
+
+	import {
+		gameState,
+		gameActions,
+		helpers,
+		helperService,
+		GameGrid,
+		GameControls,
+		HelperTools,
+		GameInfo
+	} from '$lib';
 
 	// story mode state
 	let loading = false;
@@ -15,6 +21,7 @@
 	let playerName = '';
 	let showCompletion = false;
 	let completionStats = null;
+	let feedbackMessage = null;
 
 	// reactive game data from store
 	$: currentSession = $gameState.currentSession;
@@ -65,20 +72,125 @@
 		}
 	}
 
-	// handle helper tool selection
-	function handleHelperSelect(helperName) {
-		gameState.update((state) => ({
-			...state,
-			selectedHelper: helperName
-		}));
+	// enhanced handlecellclick function with helper service integration
+	async function handleCellClick(row, col, gridType) {
+		const currentPos = currentPosition;
+		const currentMapData = gridType === 'main' ? mapData : mirroredMapData;
+		const cellValue = currentMapData[row][col];
+
+		// case 1: helper tool selected - try to remove obstacle
+		if (selectedHelper) {
+			// get the actual obstacle cell data for validation
+			const obstacleCell = currentMapData[row][col];
+
+			try {
+				// use the helper service with frontend validation
+				const result = await helperService.useHelper(
+					currentSession?.id,
+					selectedHelper,
+					row,
+					col,
+					gridType,
+					obstacleCell // pass obstacle cell for frontend validation
+				);
+
+				console.log(
+					`✅ ${result.helperUsed} used successfully on ${gridType} grid at (${row}, ${col})`
+				);
+
+				// update game state with the modified maps
+				gameState.update((state) => ({
+					...state,
+					mapData: result.updatedMaps.mainMap,
+					mirroredMapData: result.updatedMaps.mirroredMap,
+					currentSession: result.gameSession,
+					selectedHelper: null // auto-deselected by service
+				}));
+
+				// show success feedback
+				const helperConfig = helperService.getHelperConfig(result.helperUsed);
+				showSuccess(
+					`${helperConfig.emoji} ${result.helperUsed} removed ${gridType} ${obstacleCell.obstacle}!`
+				);
+			} catch (error) {
+				console.error('helper tool usage failed:', error);
+				showError(error.message || 'helper tool usage failed');
+			}
+			return;
+		}
+
+		// case 2: no helper selected - try to move player to clicked cell
+		// only allow movement to adjacent empty cells or goal
+		if (cellValue !== 0 && cellValue !== 3) {
+			showError('cannot move to that position!');
+			return;
+		}
+
+		// calculate if clicked cell is adjacent to current position
+		const rowDiff = row - currentPos.row;
+		const colDiff = gridType === 'main' ? col - currentPos.col : col - currentPos.mirroredCol;
+
+		const isAdjacent = Math.abs(rowDiff) + Math.abs(colDiff) === 1; // manhattan distance = 1
+
+		if (!isAdjacent) {
+			showError('can only move to adjacent cells!');
+			return;
+		}
+
+		// determine movement direction based on click position
+		let direction;
+		if (rowDiff === -1) direction = 'up';
+		else if (rowDiff === 1) direction = 'down';
+		else if (colDiff === -1) direction = 'left';
+		else if (colDiff === 1) direction = 'right';
+
+		if (!direction) {
+			showError('invalid movement direction!');
+			return;
+		}
+
+		// execute the move using existing handlemove function
+		try {
+			await handleMove(direction);
+		} catch (err) {
+			console.error('move failed:', err);
+			// error handling is already done in handlemove
+		}
 	}
 
-	// handle cell clicks for helper usage
-	function handleCellClick(row, col, gridType) {
-		if (!selectedHelper) return;
+	// helper functions for user feedback
+	function showError(message) {
+		console.error(message);
+		feedbackMessage = { type: 'error', text: message, timestamp: Date.now() };
+	}
 
-		console.log(`using ${selectedHelper} on ${gridType} grid at (${row}, ${col})`);
-		// todo: implement helper usage api
+	function showSuccess(message) {
+		console.log(message);
+		feedbackMessage = { type: 'success', text: message, timestamp: Date.now() };
+	}
+
+	// handle helper tool selection
+	function handleHelperSelect(helperType) {
+		helperService.selectHelper(helperType);
+	}
+
+	// setup helper keyboard controls
+	function setupHelperKeyboardControls() {
+		const handleKeydown = (event) => {
+			helperService.handleHelperKeyboard(event);
+		};
+
+		const handleHelperSelected = (event) => {
+			handleHelperSelect(event.detail.helperType);
+		};
+
+		document.addEventListener('keydown', handleKeydown);
+		document.addEventListener('helperSelected', handleHelperSelected);
+
+		return () => {
+			document.removeEventListener('keydown', handleKeydown);
+			document.removeEventListener('helperSelected', handleHelperSelected);
+		};
 	}
 
 	// start next level
@@ -109,6 +221,21 @@
 	function getStarDisplay(rating) {
 		return '⭐'.repeat(rating) + '☆'.repeat(3 - rating);
 	}
+
+	// auto-clear feedback after 3 seconds
+	$: if (feedbackMessage) {
+		setTimeout(() => {
+			if (feedbackMessage && Date.now() - feedbackMessage.timestamp > 3000) {
+				feedbackMessage = null;
+			}
+		}, 3000);
+	}
+
+	// component mount and cleanup
+	onMount(() => {
+		const cleanup = setupHelperKeyboardControls();
+		return cleanup;
+	});
 </script>
 
 <svelte:head>
@@ -138,6 +265,21 @@
 			<!-- spacer -->
 		</div>
 	</div>
+
+	<!-- feedback message display -->
+	{#if feedbackMessage}
+		<div
+			class="fixed right-4 top-4 z-50 rounded-lg border-2 p-3 shadow-lg"
+			class:bg-red-100={feedbackMessage.type === 'error'}
+			class:border-red-400={feedbackMessage.type === 'error'}
+			class:text-red-700={feedbackMessage.type === 'error'}
+			class:bg-green-100={feedbackMessage.type === 'success'}
+			class:border-green-400={feedbackMessage.type === 'success'}
+			class:text-green-700={feedbackMessage.type === 'success'}
+		>
+			{feedbackMessage.text}
+		</div>
+	{/if}
 
 	{#if showCompletion && completionStats}
 		<!-- level completion screen -->
