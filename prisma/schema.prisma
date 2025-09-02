@@ -19,7 +19,7 @@ model User {
     avatar      String?
 
     // game progress 
-    storyProgress     Json @default("{}") // {level: {completed: bool, stars: int, bestSteps: int, bestTime: int}}
+    storyProgress     String @default("{}") // {level: {completed: bool, stars: int, bestSteps: int, bestTime: int}}
     highestUnlocked   Int  @default(1) // track highest unlocked level
     totalFreeplayWins Int  @default(0)
     bestFreeplayScore Int  @default(0)
