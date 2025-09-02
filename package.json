@@ -31,7 +31,7 @@
 		"prettier": "^3.4.2",
 		"prettier-plugin-svelte": "^3.3.3",
 		"prettier-plugin-tailwindcss": "^0.6.11",
-		"prisma": "^6.14.0",
+		"prisma": "^6.15.0",
 		"svelte": "^5.0.0",
 		"svelte-check": "^4.0.0",
 		"tailwindcss": "^3.4.17",
@@ -43,9 +43,12 @@
 		"cookie": "^0.7.0"
 	},
 	"dependencies": {
-		"@prisma/client": "^6.14.0",
+		"@auth/prisma-adapter": "^2.10.0",
+		"@auth/sveltekit": "^1.10.0",
+		"@prisma/client": "^6.15.0",
 		"bcryptjs": "^3.0.2",
 		"jose": "^6.0.13",
+		"jsonwebtoken": "^9.0.2",
 		"vite-plugin-devtools-json": "^1.0.0",
 		"zod": "^4.0.17"
 	}
