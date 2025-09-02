@@ -1,133 +1,76 @@
 // src/lib/services/gameService.js
 
-import { gameState, helpers } from '$lib/stores/gameStore.js';
-import { freeplayApis } from './freeplayApis.js';
-import { storyApis } from './storyApis.js';
-import { gameApis } from './gameApis.js';
+import { get } from 'svelte/store';
+import { browser } from '$app/environment';
+
+import {
+	gameState,
+	storyProgress,
+	helpers,
+	loadGameFromStorage,
+	authService,
+	sessionService,
+	gameplayService,
+	leaderboardService
+} from '$lib';
 
 export const gameService = {
-	async startFreeplay(difficulty = 'EASY', playerName = null) {
-		const { response, data } = await freeplayApis.start(difficulty, playerName);
+	// auth
+	signup: authService.signup.bind(authService),
+	signin: authService.signin.bind(authService),
+	signout: authService.signout.bind(authService),
 
-		if (!response.ok) {
-			throw new Error(`Failed to start freeplay: ${data.error || 'Unknown error'}`);
+	// session
+	startFreeplay: sessionService.startFreeplay.bind(sessionService),
+	startStory: sessionService.startStory.bind(sessionService),
+
+	// gameplay
+	makeMove: gameplayService.makeMove.bind(gameplayService),
+	setSelectedHelper: gameplayService.setSelectedHelper.bind(gameplayService),
+	endGame: gameplayService.endGame.bind(gameplayService),
+
+	// leaderboard
+	loadLeaderboard: leaderboardService.loadLeaderboard.bind(leaderboardService),
+
+	// utility
+	getAvailableLevels() {
+		const $userState = get(userState);
+		const $storyProgress = get(storyProgress);
+
+		if (!$userState.isLoggedIn) {
+			return [1, 2, 3];
 		}
 
-		// update store state directly
-		gameState.set({
-			currentSession: data.gameSession,
-			mapData: data.mapData.mainMap,
-			mirroredMapData: data.mapData.mirroredMap,
-			currentPosition: data.gameSession.currentPosition,
-			gameMode: 'FREEPLAY',
-			status: data.gameSession.status,
-			timeLeft: data.gameSession.timeLimit,
-			selectedHelper: null
-		});
-
-		// reset helpers
-		helpers.set({
-			hammer: { available: 1, used: 0, obstacle: 'wall' },
-			axe: { available: 1, used: 0, obstacle: 'tree' },
-			sickle: { available: 1, used: 0, obstacle: 'grass' }
-		});
-
-		return data;
+		return Array.from({ length: $storyProgress.highestUnlocked }, (_, i) => i + 1);
 	},
 
-	async startStory(level = 1, playerName = null) {
-		const { response, data } = await storyApis.start(level, playerName);
-
-		if (!response.ok) {
-			throw new Error(`Failed to start story: ${data.error || 'Unknown error'}`);
-		}
-
-		// update store state directly
-		gameState.set({
-			currentSession: data.gameSession,
-			mapData: data.mapData.mainMap,
-			mirroredMapData: data.mapData.mirroredMap,
-			currentPosition: data.gameSession.currentPosition,
-			gameMode: 'STORY',
-			status: data.gameSession.status,
-			timeLeft: null, // no timer for story mode
-			selectedHelper: null
-		});
-
-		// reset helpers
-		helpers.set({
-			hammer: { available: 1, used: 0, obstacle: 'wall' },
-			axe: { available: 1, used: 0, obstacle: 'tree' },
-			sickle: { available: 1, used: 0, obstacle: 'grass' }
-		});
-
-		return data;
+	isLevelCompleted(level) {
+		const $storyProgress = get(storyProgress);
+		return $storyProgress.completedLevels[level.toString()]?.completed || false;
 	},
 
-	async makeMove(direction, gameSessionId) {
-		const { response, data } = await gameApis.move(gameSessionId, direction);
-
-		if (response.ok) {
-			// successful move - update state
-			gameState.update((state) => ({
-				...state,
-				currentSession: data.gameSession,
-				currentPosition: data.gameSession.currentPosition || data.newPosition,
-				status: data.gameSession.status
-			}));
-
-			// handle freeplay puzzle completion - new puzzle generated
-			if (data.nextPuzzle) {
-				gameState.update((state) => ({
-					...state,
-					mapData: data.mapData.mainMap,
-					mirroredMapData: data.mapData.mirroredMap
-				}));
-
-				// reset helpers for new puzzle
-				helpers.set({
-					hammer: { available: 1, used: 0, obstacle: 'wall' },
-					axe: { available: 1, used: 0, obstacle: 'tree' },
-					sickle: { available: 1, used: 0, obstacle: 'grass' }
-				});
-			}
-
-			return { success: true, data };
-		} else if (response.status === 400) {
-			// game event (collision, boundary, etc.)
-			if (data.gameSession) {
-				gameState.update((state) => ({
-					...state,
-					currentSession: data.gameSession
-				}));
-			}
-			return { success: false, reason: data.error, collision: data.collision };
-		} else {
-			// server error
-			throw new Error(`Move failed: ${data.error || 'Server error'}`);
-		}
+	getLevelStats(level) {
+		const $storyProgress = get(storyProgress);
+		return $storyProgress.completedLevels[level.toString()] || null;
 	},
 
-	// helper method to update selected helper
-	setSelectedHelper(helper) {
-		gameState.update((state) => ({
-			...state,
-			selectedHelper: helper
-		}));
-	},
+	async initialize() {
+		try {
+			await authService.initializeAuth();
 
-	// timer management for freeplay
-	startTimer() {
-		const timer = setInterval(() => {
-			gameState.update((state) => {
-				if (state.timeLeft <= 1) {
-					clearInterval(timer);
-					return { ...state, timeLeft: 0, status: 'TIME_UP' };
+			const $userState = get(userState);
+			if (!$userState.isLoggedIn) {
+				const savedGame = loadGameFromStorage();
+				if (savedGame) {
+					gameState.set(savedGame.gameState);
+					storyProgress.set(savedGame.storyProgress);
+					helpers.set(savedGame.helpers);
 				}
-				return { ...state, timeLeft: state.timeLeft - 1 };
-			});
-		}, 1000);
+			}
 
-		return timer;
+			await leaderboardService.loadLeaderboard('freeplay');
+		} catch (error) {
+			console.error('Game service initialization failed:', error);
+		}
 	}
 };
