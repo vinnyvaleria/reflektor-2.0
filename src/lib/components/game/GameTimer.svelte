@@ -1,20 +1,21 @@
 <script>
 	import { timeDisplay, gameState } from '../..';
 
-	let { gameMode = $bindable('FREEPLAY') } = $props();
+	// props
+	export let gameMode = 'FREEPLAY';
 
-	// get timeLeft from store instead of props
-	const currentGameState = $derived($gameState);
-	const displayTime = $derived($timeDisplay);
+	// use reactive declarations for stores
+	$: currentGameState = $gameState;
+	$: displayTime = $timeDisplay;
 
 	// determine timer color based on time remaining
-	const timerClass = $derived(() => {
-		const timeLeft = currentGameState.timeLeft;
-		if (!timeLeft) return '';
+	$: timerClass = (() => {
+		const timeLeft = currentGameState?.timeLeft;
+		if (timeLeft == null) return '';
 		if (timeLeft <= 30) return 'text-red-400 animate-pulse'; // danger: 30 seconds left
 		if (timeLeft <= 60) return 'text-yellow-400'; // warning: 1 minute left
 		return 'text-green-400'; // safe: plenty of time
-	});
+	})();
 </script>
 
 {#if gameMode === 'FREEPLAY' && currentGameState.timeLeft !== null}
