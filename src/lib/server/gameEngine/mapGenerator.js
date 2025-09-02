@@ -1,6 +1,6 @@
 // src/lib/server/gameEngine/mapGenerator.js
 
-import { STORY_MAPS } from '../maps/storyMaps.js';
+import { STORY_MAPS } from '$lib';
 
 export class MapGenerator {
 	// random map generator for freeplay mode
@@ -44,7 +44,8 @@ export class MapGenerator {
 				obstacles: {
 					main: this.countObstacles(mainMap),
 					mirrored: this.countObstacles(mirroredMap)
-				}
+				},
+				generatedAt: new Date().toISOString()
 			}
 		};
 	}
@@ -55,10 +56,11 @@ export class MapGenerator {
 		if (!storyData) throw new Error(`Story level ${level} not found`);
 
 		// create mirrored version with different obstacles
-		const mirroredMap = this.mirrorMap(storyData.mapData);
+		const enhancedMapData = this.addObstacleVariety(storyData.mapData);
+		const mirroredMap = this.mirrorMap(enhancedMapData);
 
 		return {
-			mainMap: storyData.mapData,
+			mainMap: enhancedMapData,
 			mirroredMap: mirroredMap,
 			metadata: {
 				size: 9,
@@ -72,9 +74,54 @@ export class MapGenerator {
 		};
 	}
 
+	// add visual variety to story maps
+	static addObstacleVariety(mapData) {
+		const obstacleTypes = ['wall', 'tree', 'grass'];
+
+		return mapData.map((row) =>
+			row.map((cell) => {
+				if (cell === 1) {
+					// convert simple obstacle to object with random type
+					return {
+						type: 1,
+						obstacle: obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)]
+					};
+				}
+				return cell;
+			})
+		);
+	}
+
+	// check if obstacle can be removed by helper tool
+	static canRemoveObstacle(obstacleCell, helperType) {
+		if (typeof obstacleCell !== 'object' || obstacleCell.type !== 1) {
+			return false; // not an obstacle
+		}
+
+		const helperMapping = {
+			hammer: 'wall',
+			axe: 'tree',
+			sickle: 'grass'
+		};
+
+		return obstacleCell.obstacle === helperMapping[helperType];
+	}
+
 	// simple horizontal mirroring - just flip each row
 	static mirrorMap(originalMap) {
-		return originalMap.map((row) => [...row].reverse());
+		return originalMap.map((row) =>
+			[...row].reverse().map((cell) => {
+				if (typeof cell === 'object' && cell.type === 1) {
+					// keep same obstacle structure but potentially different type
+					const obstacleTypes = ['wall', 'tree', 'grass'];
+					return {
+						type: 1,
+						obstacle: obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)]
+					};
+				}
+				return cell;
+			})
+		);
 	}
 
 	static createEmptyMap(size) {
@@ -85,6 +132,7 @@ export class MapGenerator {
 
 	static createRandomMap(size, min, max) {
 		const map = this.createEmptyMap(size);
+		const obstacleTypes = ['wall', 'tree', 'grass'];
 
 		// place player (bottom area - easier to see)
 		const playerRow = Math.floor(size * 0.7) + Math.floor(Math.random() * Math.floor(size * 0.3));
@@ -106,7 +154,12 @@ export class MapGenerator {
 			const col = Math.floor(Math.random() * size);
 
 			if (map[row][col] === 0) {
-				map[row][col] = 1;
+				// create obstacle with random type
+				const obstacleType = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
+				map[row][col] = {
+					type: 1,
+					obstacle: obstacleType
+				};
 				placed++;
 			}
 		}
@@ -117,6 +170,7 @@ export class MapGenerator {
 	// in case random map is too hard - create solvable simple map
 	static createSimpleMap(size) {
 		const map = this.createEmptyMap(size);
+		const obstacleTypes = ['wall', 'tree', 'grass'];
 
 		// player at bottom-left
 		map[size - 1][0] = 2;
@@ -134,7 +188,12 @@ export class MapGenerator {
 		obstacleColumns.forEach((col) => {
 			for (let i = 1; i < size - 1; i++) {
 				if (Math.random() > 0.4) {
-					map[i][col] = 1;
+					// create obstacle object instead of simple 1
+					const obstacleType = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
+					map[i][col] = {
+						type: 1,
+						obstacle: obstacleType
+					};
 				}
 			}
 		});
@@ -159,12 +218,13 @@ export class MapGenerator {
 		// when start and end not found
 		if (!start || !end) return false;
 
+		// early exit if start and end are same
+		if (start.row === end.row && start.col === end.col) return true;
+
 		// BFS pathfinding to ensure solvable - FIFO
-		const visited = Array(size)
-			.fill(0)
-			.map(() => Array(size).fill(false));
+		const visited = new Set(); // use Set for better performance
 		const queue = [start];
-		visited[start.row][start.col] = true;
+		visited.add(`${start.row},${start.col}`);
 
 		const directions = [
 			{ row: -1, col: 0 }, // up
@@ -184,19 +244,22 @@ export class MapGenerator {
 			for (const dir of directions) {
 				const newRow = current.row + dir.row;
 				const newCol = current.col + dir.col;
+				const posKey = `${newRow},${newCol}`;
 
-				// to check if it is within grid,
-				// not visited yet and not an obstacle (either content is 0 or 3)
-				if (
-					newRow >= 0 &&
-					newRow < size &&
-					newCol >= 0 &&
-					newCol < size &&
-					!visited[newRow][newCol] &&
-					(map[newRow][newCol] === 0 || map[newRow][newCol] === 3)
-				) {
-					visited[newRow][newCol] = true;
-					queue.push({ row: newRow, col: newCol });
+				// to check if it is within grid, not visited yet and not an obstacle
+				if (newRow >= 0 && newRow < size && newCol >= 0 && newCol < size && !visited.has(posKey)) {
+					const cell = map[newRow][newCol];
+					// allow movement through empty cells (0) or goal (3)
+					// block movement through obstacles (type 1 objects or value 1)
+					const isPassable =
+						cell === 0 ||
+						cell === 3 ||
+						(!(typeof cell === 'object' && cell.type === 1) && cell !== 1);
+
+					if (isPassable) {
+						visited.add(posKey);
+						queue.push({ row: newRow, col: newCol });
+					}
 				}
 			}
 		}
@@ -205,13 +268,26 @@ export class MapGenerator {
 	}
 
 	static countObstacles(map) {
-		return map.flat().filter((cell) => cell === 1).length;
+		return map.flat().filter((cell) => cell === 1 || (typeof cell === 'object' && cell.type === 1))
+			.length;
 	}
 
 	static getPlayerPosition(map) {
 		for (let row = 0; row < map.length; row++) {
 			for (let col = 0; col < map[row].length; col++) {
 				if (map[row][col] === 2) {
+					return { row, col };
+				}
+			}
+		}
+		return null;
+	}
+
+	// get goal position for validation
+	static getGoalPosition(map) {
+		for (let row = 0; row < map.length; row++) {
+			for (let col = 0; col < map[row].length; col++) {
+				if (map[row][col] === 3) {
 					return { row, col };
 				}
 			}
