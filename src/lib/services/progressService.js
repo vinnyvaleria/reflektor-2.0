@@ -3,50 +3,73 @@
 import { get } from 'svelte/store';
 import { browser } from '$app/environment';
 
-import { storyProgress, saveGameToStorage, progressApis } from '$lib';
+import { storyProgress, saveGameToStorage, progressApis, withLoadingState } from '$lib';
 
 export const progressService = {
 	async loadUserProgress(userId) {
-		try {
-			const result = await progressApis.getUserProgress(userId);
+		return withLoadingState(
+			storyProgress,
+			async () => {
+				const result = await progressApis.getUserProgress(userId);
 
-			if (result.success) {
-				const progress = result.data.user.storyProgress || {};
+				if (result.success) {
+					const progress = result.data.user.storyProgress || {};
 
-				storyProgress.set({
-					highestUnlocked: result.data.user.highestUnlocked,
-					completedLevels: progress,
-					totalStars: result.data.user.stats.totalStars,
-					completionPercentage: result.data.user.stats.completionPercentage,
-					averageTime: result.data.user.stats.averageTimePerLevel,
-					lastPlayedLevel: Math.max(...Object.keys(progress).map((k) => parseInt(k)), 1)
-				});
+					const progressData = {
+						highestUnlocked: result.data.user.highestUnlocked,
+						completedLevels: progress,
+						totalStars: result.data.user.stats.totalStars,
+						completionPercentage: result.data.user.stats.completionPercentage,
+						averageTime: result.data.user.stats.averageTimePerLevel,
+						lastPlayedLevel: Math.max(...Object.keys(progress).map((k) => parseInt(k)), 1)
+					};
+
+					storyProgress.update((state) => ({
+						...state,
+						...progressData
+					}));
+
+					return progressData;
+				}
+			},
+			{
+				onError: (error) => {
+					console.error('Failed to load user progress:', error);
+				}
 			}
-		} catch (error) {
-			console.error('Failed to load user progress:', error);
-		}
+		);
 	},
 
 	async resetStoryProgress(userId) {
-		try {
-			const result = await progressApis.resetStoryProgress(userId);
+		return withLoadingState(
+			storyProgress,
+			async () => {
+				const result = await progressApis.resetStoryProgress(userId);
 
-			if (result.success) {
-				storyProgress.set({
-					highestUnlocked: 1,
-					completedLevels: {},
-					totalStars: 0,
-					completionPercentage: 0,
-					averageTime: 0,
-					lastPlayedLevel: 1
-				});
+				if (result.success) {
+					const resetData = {
+						highestUnlocked: 1,
+						completedLevels: {},
+						totalStars: 0,
+						completionPercentage: 0,
+						averageTime: 0,
+						lastPlayedLevel: 1
+					};
+
+					storyProgress.update((state) => ({
+						...state,
+						...resetData
+					}));
+
+					return result;
+				}
+			},
+			{
+				onError: (error) => {
+					console.error('Reset progress failed:', error);
+				}
 			}
-
-			return result;
-		} catch (error) {
-			console.error('Reset progress failed:', error);
-			throw error;
-		}
+		);
 	},
 
 	updateGuestStoryProgress(completionStats) {

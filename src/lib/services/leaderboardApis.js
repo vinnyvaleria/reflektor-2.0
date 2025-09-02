@@ -2,41 +2,20 @@
 
 import { get } from 'svelte/store';
 
-import { userState, getAuthHeaders } from '$lib';
+import { userState, getAuthHeaders, addUserIdToBody, apiPost, apiGet } from '$lib';
 
 export const leaderboardApis = {
 	async getLeaderboard(type = 'freeplay', difficulty = null, limit = 50) {
-		const params = new URLSearchParams({ type, limit: limit.toString() });
-		if (difficulty) params.append('difficulty', difficulty);
+		const params = { type, limit: limit.toString() };
+		if (difficulty) params.difficulty = difficulty;
 
-		const response = await fetch(`/api/leaderboard?${params}`);
-		const data = await response.json();
-
-		if (response.ok) {
-			return { success: true, data };
-		} else {
-			throw new Error(data.error || 'Failed to get leaderboard');
-		}
+		return apiGet('/api/leaderboard', params, 'Failed to get leaderboard');
 	},
 
 	async submitScore(gameSessionId) {
 		const $userState = get(userState);
+		const body = addUserIdToBody({ gameSessionId });
 
-		const response = await fetch('/api/leaderboard', {
-			method: 'POST',
-			headers: getAuthHeaders(),
-			body: JSON.stringify({
-				gameSessionId,
-				userId: $userState.user?.id
-			})
-		});
-
-		const data = await response.json();
-
-		if (response.ok) {
-			return { success: true, data };
-		} else {
-			throw new Error(data.error || 'Failed to submit score');
-		}
+		return apiPost('/api/leaderboard', body, 'Failed to submit score');
 	}
 };

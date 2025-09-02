@@ -1,7 +1,8 @@
 // src/lib/services/timerService.js
 
 import { get } from 'svelte/store';
-import { gameState } from '$lib/stores/gameStore.js';
+
+import { gameState } from '$lib';
 
 export const timerService = {
 	timer: null,

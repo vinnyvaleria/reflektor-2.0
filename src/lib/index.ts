@@ -1,7 +1,7 @@
 // src/lib/index.ts
 
 // ===========================
-// SERVICES 
+// SERVICES
 // ===========================
 export { gameService } from './services/gameService.js';
 export { authService } from './services/authService.js';
@@ -11,6 +11,7 @@ export { progressService } from './services/progressService.js';
 export { leaderboardService } from './services/leaderboardService.js';
 export { timerService } from './services/timerService.js';
 export { storageService } from './services/storageService.js';
+export { helperService, HELPER_CONFIG } from './services/helperService.js';
 
 // API Services (usually not imported directly by components)
 export { authApis } from './services/authApis.js';
@@ -19,6 +20,7 @@ export { storyApis } from './services/storyApis.js';
 export { gameApis } from './services/gameApis.js';
 export { progressApis } from './services/progressApis.js';
 export { leaderboardApis } from './services/leaderboardApis.js';
+export { helperApis } from './services/helperApi.js';
 
 // ===========================
 // STORES - State management
@@ -39,7 +41,7 @@ export {
 } from './stores/gameStore.js';
 
 // ===========================
-// COMPONENTS 
+// COMPONENTS
 // ===========================
 export { default as GameGrid } from './components/game/GameGrid.svelte';
 export { default as GameControls } from './components/game/GameControls.svelte';
@@ -48,12 +50,31 @@ export { default as GameTimer } from './components/game/GameTimer.svelte';
 export { default as HelperTools } from './components/game/HelperTools.svelte';
 
 // ===========================
-// UTILITIES 
+// UTILITIES
 // ===========================
 export { getAuthHeaders } from './utils/getAuthHeaders.js';
+export {
+	apiCall,
+	apiPost,
+	apiGet,
+	apiPut,
+	apiDelete,
+	getCurrentUserId,
+	getCurrentUser,
+	addUserIdToBody
+} from './utils/apiUtils.js';
+export {
+	withLoadingState,
+	updateNestedStore,
+	incrementStoreValue,
+	resetStore,
+	mergeStoreState,
+	getStoreValue,
+	updateStoreArray
+} from './utils/storeUtils.js';
 
 // ===========================
-// SERVER-SIDE 
+// SERVER-SIDE
 // ===========================
 export { prisma } from './server/database.js';
 export { MapGenerator } from './server/gameEngine/mapGenerator.js';

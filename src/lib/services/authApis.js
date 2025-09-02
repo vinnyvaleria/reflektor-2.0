@@ -1,56 +1,36 @@
 // src/lib/services/authApis.js
 
+import { apiPost, apiGet, apiPut } from '$lib';
+
 export const authApis = {
 	async signup(username, password, email = null, displayName = null) {
-		const response = await fetch('/api/auth/signup', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ username, password, email, displayName })
-		});
+		const body = { username, password, email, displayName };
 
-		const data = await response.json();
-
-		if (response.ok) {
-			return { success: true, user: data.user };
-		} else {
-			throw new Error(data.error || 'Signup failed');
-		}
+		return apiPost('/api/auth/signup', body, 'Signup failed');
 	},
 
 	async signin(username, password, rememberMe = false) {
-		const response = await fetch('/api/auth/signin', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ username, password, rememberMe })
-		});
+		const body = { username, password, rememberMe };
 
-		const data = await response.json();
+		const response = apiPost('/api/auth/signin', body);
 
-		if (response.ok) {
+		if (response.success) {
 			// store token in localStorage
 			if (typeof window !== 'undefined') {
-				localStorage.setItem('reflektor_user_token', data.token);
+				localStorage.setItem('reflektor_user_token', response.data.token);
 			}
-			return { success: true, user: data.user, token: data.token };
+			return { success: true, user: response.data.user, token: response.data.token };
 		} else {
 			throw new Error(data.error || 'Sign in failed');
 		}
 	},
 
 	async verifyToken(token) {
-		const response = await fetch('/api/auth/signin', {
-			method: 'PUT',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ token })
-		});
-
-		const data = await response.json();
-		return response.ok ? { success: true, user: data.user } : { success: false };
+		return apiPut('/api/auth/signin', { token });
 	},
 
 	async checkUsername(username) {
-		const response = await fetch(`/api/auth/signup?username=${encodeURIComponent(username)}`);
-		const data = await response.json();
-		return data.available;
+		const response = apiGet(`/api/auth/signup`, { username }, 'Failed to find username');
+		return response.data.available;
 	}
 };

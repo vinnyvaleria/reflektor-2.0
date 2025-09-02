@@ -1,6 +1,7 @@
 // src/lib/utils/getAuthHeaders.js
 
 import { get } from 'svelte/store';
+
 import { userState } from '$lib';
 
 // helper function to get auth headers

@@ -1,9 +1,9 @@
 // src/lib/services/helperService.js
 
 import { get } from 'svelte/store';
-import { helperState, gameState, helperApis } from '$lib';
 
-// Helper tools configuration (matches your 3 obstacle types)
+import { helpers, gameState, helperApis, incrementStoreValue } from '$lib';
+
 export const HELPER_CONFIG = {
 	hammer: {
 		name: 'Hammer',
@@ -43,10 +43,10 @@ export const helperService = {
 				throw new Error(validation.error);
 			}
 
-			// check if helper is available
-			const $helperState = get(helperState);
-			const helperUsage = $helperState.usage[helperType];
-			if (helperUsage.used >= helperUsage.available) {
+			// check if helper is available using existing helpers store
+			const $helpers = get(helpers);
+			const helperData = $helpers[helperType];
+			if (helperData.used >= helperData.available) {
 				throw new Error(`${HELPER_CONFIG[helperType].name} has already been used`);
 			}
 
@@ -60,17 +60,19 @@ export const helperService = {
 			);
 
 			if (result.success) {
-				// update helper usage tracking
-				helperState.update((state) => ({
+				// update helper usage tracking using existing helpers store
+				helpers.update((state) => ({
 					...state,
-					usage: {
-						...state.usage,
-						[helperType]: {
-							...state.usage[helperType],
-							used: state.usage[helperType].used + 1
-						}
-					},
-					selectedHelper: null // auto-deselect after use
+					[helperType]: {
+						...state[helperType],
+						used: state[helperType].used + 1
+					}
+				}));
+
+				// clear selected helper from gameState
+				gameState.update((state) => ({
+					...state,
+					selectedHelper: null
 				}));
 			}
 
@@ -88,31 +90,34 @@ export const helperService = {
 			return;
 		}
 
-		helperState.update((state) => ({
+		// update gameState with selected helper (using existing pattern)
+		gameState.update((state) => ({
 			...state,
 			selectedHelper: helperType
 		}));
 	},
 
 	isHelperAvailable(helperType) {
-		const $helperState = get(helperState);
-		const helper = $helperState.usage[helperType];
+		const $helpers = get(helpers);
+		const helper = $helpers[helperType];
 		return helper && helper.used < helper.available;
 	},
 
 	resetHelpers(resetConfig = {}) {
 		const defaultReset = {
-			hammer: { used: 0, available: 1 },
-			axe: { used: 0, available: 1 },
-			sickle: { used: 0, available: 1 }
+			hammer: { available: 1, used: 0, obstacle: 'wall' },
+			axe: { available: 1, used: 0, obstacle: 'tree' },
+			sickle: { available: 1, used: 0, obstacle: 'grass' }
 		};
 
 		// merge with custom reset config if provided
 		const resetState = { ...defaultReset, ...resetConfig };
 
-		helperState.update((state) => ({
+		helpers.set(resetState);
+
+		// clear selected helper from gameState
+		gameState.update((state) => ({
 			...state,
-			usage: resetState,
 			selectedHelper: null
 		}));
 	},
@@ -175,35 +180,35 @@ export const helperService = {
 		}
 	},
 
-	async loadHelperState(gameSessionId) {
-		try {
-			const result = await helperApis.getHelperUsage(gameSessionId);
+	loadHelperState(gameSessionId) {
+		// load helper usage from game session and update existing helpers store
+		return helperApis
+			.getHelperUsage(gameSessionId)
+			.then((result) => {
+				if (result.success) {
+					const helperUsage = result.data.helperUsage || [];
 
-			if (result.success) {
-				const helperUsage = result.data.helperUsage || [];
-				const usage = {
-					hammer: { used: 0, available: 1 },
-					axe: { used: 0, available: 1 },
-					sickle: { used: 0, available: 1 }
-				};
+					// reset to defaults first
+					const usage = {
+						hammer: { available: 1, used: 0, obstacle: 'wall' },
+						axe: { available: 1, used: 0, obstacle: 'tree' },
+						sickle: { available: 1, used: 0, obstacle: 'grass' }
+					};
 
-				// count usage from session data
-				helperUsage.forEach((use) => {
-					if (usage[use.type]) {
-						usage[use.type].used += 1;
-					}
-				});
+					// count usage from session data
+					helperUsage.forEach((use) => {
+						if (usage[use.type]) {
+							usage[use.type].used += 1;
+						}
+					});
 
-				helperState.update((state) => ({
-					...state,
-					usage,
-					selectedHelper: null
-				}));
-			}
-		} catch (error) {
-			console.error('Failed to load helper state:', error);
-			this.resetHelpers(); // fallback to reset
-		}
+					helpers.set(usage);
+				}
+			})
+			.catch((error) => {
+				console.error('Failed to load helper state:', error);
+				this.resetHelpers(); // fallback to reset
+			});
 	},
 
 	async resetHelperUsageForSession(gameSessionId) {
@@ -211,7 +216,7 @@ export const helperService = {
 			const result = await helperApis.resetHelperUsage(gameSessionId);
 
 			if (result.success) {
-				this.resetHelpers(); // update local state
+				this.resetHelpers(); // update local state using existing pattern
 			}
 
 			return result;

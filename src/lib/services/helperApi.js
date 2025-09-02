@@ -2,68 +2,30 @@
 
 import { get } from 'svelte/store';
 
-import { userState, getAuthHeaders } from '$lib';
+import { apiPost, apiGet, addUserIdToBody } from '$lib';
 
 export const helperApis = {
+	// use a helper tool to remove an obstacle
 	async useHelper(gameSessionId, helperType, targetRow, targetCol, gridType) {
-		const $userState = get(userState);
-
-		const response = await fetch('/api/game/helper', {
-			method: 'POST',
-			headers: getAuthHeaders(),
-			body: JSON.stringify({
-				gameSessionId,
-				helperType,
-				targetRow,
-				targetCol,
-				gridType,
-				userId: $userState.user?.id
-			})
+		const body = addUserIdToBody({
+			gameSessionId,
+			helperType,
+			targetRow,
+			targetCol,
+			gridType
 		});
 
-		const data = await response.json();
-
-		if (response.ok) {
-			return { success: true, data };
-		} else {
-			throw new Error(data.error || 'Failed to use helper tool');
-		}
+		return apiPost('/api/game/helper', body, 'Failed to use helper tool');
 	},
 
+	// get helper usage statistics for a game session
 	async getHelperUsage(gameSessionId) {
-		const params = new URLSearchParams({ gameSessionId });
-
-		const response = await fetch(`/api/game/helper/usage?${params}`, {
-			headers: getAuthHeaders()
-		});
-
-		const data = await response.json();
-
-		if (response.ok) {
-			return { success: true, data };
-		} else {
-			throw new Error(data.error || 'Failed to get helper usage');
-		}
+		return apiGet('/api/game/helper/usage', { gameSessionId }, 'Failed to get helper usage');
 	},
 
+	// reset helper usage for a game session (admin/debug function)
 	async resetHelperUsage(gameSessionId) {
-		const $userState = get(userState);
-
-		const response = await fetch('/api/game/helper/reset', {
-			method: 'POST',
-			headers: getAuthHeaders(),
-			body: JSON.stringify({
-				gameSessionId,
-				userId: $userState.user?.id
-			})
-		});
-
-		const data = await response.json();
-
-		if (response.ok) {
-			return { success: true, data };
-		} else {
-			throw new Error(data.error || 'Failed to reset helper usage');
-		}
+		const body = addUserIdToBody({ gameSessionId });
+		return apiPost('/api/game/helper/reset', body, 'Failed to reset helper usage');
 	}
 };
