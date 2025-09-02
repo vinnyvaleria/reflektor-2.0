@@ -1,7 +1,7 @@
 // src/lib/server/auth.js
 import { SvelteKitAuth } from '@auth/sveltekit';
 import { PrismaAdapter } from '@auth/prisma-adapter';
-import { prisma } from '$lib';
+import { prisma } from '$lib/server/database.js';
 import bcrypt from 'bcryptjs';
 
 export const { handle, signIn, signOut } = SvelteKitAuth({

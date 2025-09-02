@@ -74,13 +74,6 @@ export {
 } from './utils/storeUtils.js';
 
 // ===========================
-// SERVER-SIDE
-// ===========================
-export { prisma } from './server/database.js';
-export { MapGenerator } from './server/gameEngine/mapGenerator.js';
-export { STORY_MAPS } from './server/maps/storyMaps.js';
-
-// ===========================
 // CONSTANTS - Game configuration
 // ===========================
 export const GAME_CONFIG = {
