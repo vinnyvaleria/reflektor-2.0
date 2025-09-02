@@ -1,137 +1,288 @@
 <script>
-	import { gameState } from '$lib/stores/gameStore.js';
-	import { gameService } from '$lib/services/gameService.js';
+	import { goto } from '$app/navigation';
+	import { userState, storyProgress } from '$lib/stores/gameStore.js';
+	import { authService, leaderboardService } from '$lib/services/gameService.js';
 
-	import GameGrid from '$lib/components/game/GameGrid.svelte';
-	import GameControls from '$lib/components/game/GameControls.svelte';
-	import HelperTools from '$lib/components/game/HelperTools.svelte';
-	import GameTimer from '$lib/components/game/GameTimer.svelte';
-	import GameInfo from '$lib/components/game/GameInfo.svelte';
+	let showAuth = false;
+	let authMode = 'signin'; // 'signin' or 'signup'
+	let authLoading = false;
+	let authError = '';
 
-	// local UI state
-	let loading = $state(false);
-	let error = $state('');
-	let gameTimer = null;
+	// form data
+	let username = '';
+	let password = '';
+	let email = '';
+	let displayName = '';
 
-	// get current game state
-	const currentGameState = $derived($gameState);
+	$: currentUser = $userState;
+	$: currentProgress = $storyProgress;
+	$: isGuest = !currentUser.isLoggedIn;
 
-	async function startFreeplay() {
-		loading = true;
-		error = '';
-		try {
-			const data = await gameService.startFreeplay('EASY', 'player');
-
-			// start timer for freeplay using the game service
-			if (data.gameSession.timeLimit) {
-				gameTimer = gameService.startTimer();
-			}
-		} catch (err) {
-			error = err.message;
+	async function handleAuth() {
+		if (!username || !password) {
+			authError = 'Username and password are required';
+			return;
 		}
-		loading = false;
-	}
 
-	async function startStory() {
-		loading = true;
-		error = '';
-		try {
-			await gameService.startStory(1, 'player');
-		} catch (err) {
-			error = err.message;
-		}
-		loading = false;
-	}
-
-	async function handleMove(direction) {
-		if (!currentGameState.currentSession || currentGameState.status !== 'PLAYING') return;
+		authLoading = true;
+		authError = '';
 
 		try {
-			const result = await gameService.makeMove(direction, currentGameState.currentSession.id);
-
-			if (!result.success && result.collision) {
-				console.log('Move blocked:', result.reason);
+			if (authMode === 'signup') {
+				await authService.signup(username, password, email || null, displayName || null);
+			} else {
+				await authService.signin(username, password);
 			}
-		} catch (err) {
-			console.error('Move error:', err);
+
+			// close auth modal on success
+			showAuth = false;
+			resetAuthForm();
+		} catch (error) {
+			authError = error.message;
 		}
+
+		authLoading = false;
 	}
 
-	function handleCellClick(row, col, gridType) {
-		console.log(
-			`Clicked ${gridType} grid at (${row}, ${col}) with helper: ${currentGameState.selectedHelper}`
-		);
-		// TODO: Implement helper tool usage logic here
-		// This would remove obstacles from the grid when appropriate helper is selected
+	function resetAuthForm() {
+		username = '';
+		password = '';
+		email = '';
+		displayName = '';
+		authError = '';
 	}
 
-	function handleHelperSelect(helper) {
-		// Update store through service
-		gameService.setSelectedHelper(helper);
-		console.log('Helper selected:', helper);
+	function toggleAuthMode() {
+		authMode = authMode === 'signin' ? 'signup' : 'signin';
+		resetAuthForm();
 	}
 
-	// cleanup timer when component is destroyed
-	$effect(() => {
-		return () => {
-			if (gameTimer) {
-				clearInterval(gameTimer);
-			}
-		};
-	});
+	async function handleSignOut() {
+		await authService.signout();
+	}
+
+	function navigateToFreeplay() {
+		goto('/freeplay');
+	}
+
+	function navigateToStory() {
+		goto('/story');
+	}
+
+	function navigateToLeaderboard() {
+		goto('/leaderboard');
+	}
 </script>
 
-<div class="main-game-background min-h-screen p-8 text-white">
-	<div class="container mx-auto">
-		{#if !currentGameState.currentSession}
-			<!-- Game Start -->
-			<div class="text-center">
-				<h1 class="mb-8 font-pixelify text-4xl font-bold text-white">Reflektor Game</h1>
-				<div class="space-x-4">
-					<button
-						onclick={startFreeplay}
-						disabled={loading}
-						class="rounded-lg bg-blue-600 px-6 py-3 font-bold hover:bg-blue-700 disabled:opacity-50"
-					>
-						{loading ? 'Starting...' : 'Start Freeplay'}
-					</button>
-					<button
-						onclick={startStory}
-						disabled={loading}
-						class="rounded-lg bg-green-600 px-6 py-3 font-bold hover:bg-green-700 disabled:opacity-50"
-					>
-						{loading ? 'Starting...' : 'Start Story Mode'}
+<div
+	class="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 p-4"
+>
+	<div class="mx-auto max-w-4xl text-center">
+		<!-- Game Title -->
+		<h1
+			class="mb-4 text-8xl font-bold text-white drop-shadow-2xl"
+			style="font-family: 'Pixelify Sans', sans-serif;"
+		>
+			reflektor
+		</h1>
+
+		<p
+			class="mx-auto mb-12 max-w-2xl text-xl text-white/90"
+			style="font-family: 'Jersey 10', sans-serif;"
+		>
+			Navigate two mirrored grids simultaneously in this challenging puzzle game
+		</p>
+
+		<!-- User Status -->
+		{#if currentUser.isLoggedIn}
+			<div class="mb-8 rounded-lg bg-white/10 p-4 backdrop-blur-sm">
+				<p class="mb-2 text-white" style="font-family: 'Jersey 10', sans-serif;">
+					Welcome back, <span class="font-bold"
+						>{currentUser.user.displayName || currentUser.user.username}</span
+					>!
+				</p>
+				<div class="flex items-center justify-center gap-4 text-sm text-white/80">
+					<span>Story Progress: {currentProgress.completionPercentage}%</span>
+					<span>⭐ {currentProgress.totalStars} Stars</span>
+					<button on:click={handleSignOut} class="text-red-300 underline hover:text-red-200">
+						Sign Out
 					</button>
 				</div>
-				{#if error}
-					<p class="mt-4 text-red-400">{error}</p>
-				{/if}
 			</div>
 		{:else}
-			<!-- Game Interface -->
-			<div class="grid grid-cols-1 gap-6 xl:grid-cols-4">
-				<!-- Game Grid -->
-				<div class="xl:col-span-3">
-					<GameGrid onCellClick={handleCellClick} />
-				</div>
-
-				<!-- Sidebar -->
-				<div class="space-y-4">
-					<GameInfo />
-					<GameTimer gameMode={currentGameState.gameMode} />
-					<GameControls onMove={handleMove} disabled={currentGameState.status !== 'PLAYING'} />
-					<HelperTools
-						selectedHelper={currentGameState.selectedHelper}
-						onHelperSelect={handleHelperSelect}
-					/>
-				</div>
+			<div class="mb-8 rounded-lg bg-yellow-500/20 p-4 backdrop-blur-sm">
+				<p class="text-sm text-yellow-100" style="font-family: 'Jersey 10', sans-serif;">
+					🎮 Playing as Guest - Progress won't be saved.
+					<button
+						on:click={() => {
+							showAuth = true;
+							authMode = 'signin';
+						}}
+						class="text-yellow-200 underline hover:text-white"
+					>
+						Sign In
+					</button>
+					or
+					<button
+						on:click={() => {
+							showAuth = true;
+							authMode = 'signup';
+						}}
+						class="text-yellow-200 underline hover:text-white"
+					>
+						Create Account
+					</button>
+				</p>
 			</div>
 		{/if}
-	</div>
-</div>
 
-<style>
-	.font-pixelify {
-		font-family: 'Pixelify Sans', sans-serif;
-	}
-</style>
+		<!-- Main Menu Buttons -->
+		<div class="mb-8 grid gap-6 md:grid-cols-2">
+			<!-- Freeplay Mode -->
+			<button
+				on:click={navigateToFreeplay}
+				class="group relative overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 p-8 shadow-2xl transition-all duration-300 hover:scale-105 hover:from-blue-700 hover:to-cyan-700"
+			>
+				<div class="relative z-10">
+					<div class="mb-4 text-4xl">🎲</div>
+					<h3
+						class="mb-2 text-2xl font-bold text-white"
+						style="font-family: 'Jersey 10', sans-serif;"
+					>
+						FREEPLAY MODE
+					</h3>
+					<p class="text-sm text-blue-100">
+						Solve random puzzles within time limit<br />
+						Compete for high scores on leaderboard
+					</p>
+				</div>
+			</button>
+
+			<!-- Story Mode -->
+			<button
+				on:click={navigateToStory}
+				class="group relative overflow-hidden rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 p-8 shadow-2xl transition-all duration-300 hover:scale-105 hover:from-green-700 hover:to-emerald-700"
+			>
+				<div class="relative z-10">
+					<div class="mb-4 text-4xl">📖</div>
+					<h3
+						class="mb-2 text-2xl font-bold text-white"
+						style="font-family: 'Jersey 10', sans-serif;"
+					>
+						STORY MODE
+					</h3>
+					<p class="text-sm text-green-100">
+						Progress through 30 designed levels<br />
+						{isGuest
+							? 'First 3 levels available as guest'
+							: `${currentProgress.highestUnlocked - 1} levels completed`}
+					</p>
+				</div>
+			</button>
+		</div>
+
+		<!-- Secondary Actions -->
+		<div class="flex flex-wrap justify-center gap-4">
+			<button
+				on:click={navigateToLeaderboard}
+				class="rounded-lg bg-purple-600/80 px-6 py-3 font-bold text-white backdrop-blur-sm transition-colors hover:bg-purple-600"
+				style="font-family: 'Jersey 10', sans-serif;"
+			>
+				🏆 Leaderboard
+			</button>
+
+			<button
+				on:click={() => goto('/rules')}
+				class="rounded-lg bg-gray-600/80 px-6 py-3 font-bold text-white backdrop-blur-sm transition-colors hover:bg-gray-600"
+				style="font-family: 'Jersey 10', sans-serif;"
+			>
+				📋 How to Play
+			</button>
+		</div>
+	</div>
+
+	<!-- Auth Modal -->
+	{#if showAuth}
+		<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+			<div class="w-full max-w-md rounded-xl bg-gray-800 p-8">
+				<h2
+					class="mb-6 text-center text-2xl font-bold text-white"
+					style="font-family: 'Jersey 10', sans-serif;"
+				>
+					{authMode === 'signin' ? 'Sign In' : 'Create Account'}
+				</h2>
+
+				<form on:submit|preventDefault={handleAuth} class="space-y-4">
+					<input
+						type="text"
+						placeholder="Username"
+						bind:value={username}
+						class="w-full rounded-lg border border-gray-600 bg-gray-700 p-3 text-white focus:border-blue-500"
+						required
+					/>
+
+					<input
+						type="password"
+						placeholder="Password"
+						bind:value={password}
+						class="w-full rounded-lg border border-gray-600 bg-gray-700 p-3 text-white focus:border-blue-500"
+						required
+					/>
+
+					{#if authMode === 'signup'}
+						<input
+							type="email"
+							placeholder="Email (optional)"
+							bind:value={email}
+							class="w-full rounded-lg border border-gray-600 bg-gray-700 p-3 text-white focus:border-blue-500"
+						/>
+
+						<input
+							type="text"
+							placeholder="Display Name (optional)"
+							bind:value={displayName}
+							class="w-full rounded-lg border border-gray-600 bg-gray-700 p-3 text-white focus:border-blue-500"
+						/>
+					{/if}
+
+					{#if authError}
+						<p class="text-sm text-red-400">{authError}</p>
+					{/if}
+
+					<div class="flex gap-4">
+						<button
+							type="submit"
+							disabled={authLoading}
+							class="flex-1 rounded-lg bg-blue-600 py-3 font-bold text-white hover:bg-blue-700 disabled:opacity-50"
+						>
+							{authLoading
+								? 'Please wait...'
+								: authMode === 'signin'
+									? 'Sign In'
+									: 'Create Account'}
+						</button>
+
+						<button
+							type="button"
+							on:click={() => (showAuth = false)}
+							class="rounded-lg bg-gray-600 px-6 py-3 font-bold text-white hover:bg-gray-700"
+						>
+							Cancel
+						</button>
+					</div>
+				</form>
+
+				<div class="mt-6 text-center">
+					<button
+						on:click={toggleAuthMode}
+						class="text-sm text-blue-400 underline hover:text-blue-300"
+					>
+						{authMode === 'signin'
+							? 'Need an account? Sign up'
+							: 'Already have an account? Sign in'}
+					</button>
+				</div>
+			</div>
+		</div>
+	{/if}
+</div>
