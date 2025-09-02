@@ -1,5 +1,5 @@
 <script>
-	import { gameState } from '$lib/stores/gameStore.js';
+	import { gameState } from '../..';
 
 	// get data from store instead of props
 	const currentGameState = $derived($gameState);

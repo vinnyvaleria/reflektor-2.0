@@ -1,44 +1,74 @@
 <script>
-	import { gameState } from '$lib/stores/gameStore.js';
+	import { gameState } from '../..';
 
-	let {
-		onCellClick = null // callback for cell clicks
-	} = $props();
+	export let onCellClick = null; // callback for cell clicks (optional)
 
-	// get all data from store
-	const currentGameState = $derived($gameState);
-	const gridSize = $derived(currentGameState.mapData?.length || 5);
+	$: currentGameState = $gameState;
+	$: gridSize = currentGameState.mapData?.length || 5;
 
-	// get what should be displayed in each cell
+	// handle both simple obstacles (1) and obstacle objects {type: 1, obstacle: 'wall'}
+	function getObstacleInfo(cellValue) {
+		if (cellValue === 1) {
+			return { isObstacle: true, type: 'wall' };
+		}
+		if (typeof cellValue === 'object' && cellValue?.type === 1) {
+			return { isObstacle: true, type: cellValue.obstacle || 'wall' };
+		}
+		return { isObstacle: false, type: null };
+	}
+
+	function getObstacleDisplay(obstacleType) {
+		const obstacleIcons = {
+			wall: '🧱',
+			tree: '🌳',
+			grass: '🌿'
+		};
+		return obstacleIcons[obstacleType] || '🧱';
+	}
+
 	function getCellContent(row, col, isMainGrid = true) {
 		const mapData = isMainGrid ? currentGameState.mapData : currentGameState.mirroredMapData;
 		const cellValue = mapData?.[row]?.[col];
 
-		// check if this cell has the player
 		const isPlayerPosition = isMainGrid
 			? row === currentGameState.currentPosition.row && col === currentGameState.currentPosition.col
 			: row === currentGameState.currentPosition.row &&
 				col === currentGameState.currentPosition.mirroredCol;
 
 		if (isPlayerPosition) {
-			return isMainGrid ? 'P' : 'NPC'; // P for player, NPC for mirrored character
+			return isMainGrid ? 'P' : 'M';
+		}
+
+		const obstacleInfo = getObstacleInfo(cellValue);
+		if (obstacleInfo.isObstacle) {
+			return getObstacleDisplay(obstacleInfo.type);
 		}
 
 		switch (cellValue) {
 			case 0:
-				return ''; // empty cell
-			case 1:
-				return '🧱'; // obstacle
+				return '';
 			case 2:
-				return isMainGrid ? 'P' : 'NPC'; // player position
+				return isMainGrid ? 'P' : 'M';
 			case 3:
-				return 'X'; // goal
+				return 'X';
 			default:
 				return '';
 		}
 	}
 
-	// get css classes for each cell based on its state
+	function canHelperRemoveObstacle(cellValue, selectedHelper) {
+		const obstacleInfo = getObstacleInfo(cellValue);
+		if (!obstacleInfo.isObstacle || !selectedHelper) return false;
+
+		const helperMapping = {
+			hammer: 'wall',
+			axe: 'tree',
+			sickle: 'grass'
+		};
+
+		return obstacleInfo.type === helperMapping[selectedHelper];
+	}
+
 	function getCellClass(row, col, isMainGrid = true) {
 		const mapData = isMainGrid ? currentGameState.mapData : currentGameState.mirroredMapData;
 		const cellValue = mapData?.[row]?.[col];
@@ -47,59 +77,73 @@
 			: row === currentGameState.currentPosition.row &&
 				col === currentGameState.currentPosition.mirroredCol;
 
-		// base cell styling
 		let classes =
-			'custom-border-outset w-16 h-16 border-2 border-game-blue flex items-center justify-center text-xl font-bold transition-all duration-200';
+			'w-16 h-16 border-2 border-game-blue flex items-center justify-center text-xl font-bold transition-all duration-200';
 
 		if (isPlayerPosition) {
-			// highlight player positions with yellow and animation
 			classes += ' bg-yellow-300 text-game-dark animate-pulse';
-		} else if (cellValue === 1) {
-			// obstacle styling - clickable if helper is selected
-			classes += ' bg-game-blue text-white';
-			if (currentGameState.selectedHelper) {
-				classes += ' cursor-pointer hover:bg-game-primary ring-2 ring-game-primary';
-			}
-		} else if (cellValue === 3) {
-			// goal styling
-			classes += ' bg-game-green text-game-dark font-black';
 		} else {
-			// empty cell styling
-			classes += ' bg-game-light hover:bg-gray-100';
+			const obstacleInfo = getObstacleInfo(cellValue);
+			if (obstacleInfo.isObstacle) {
+				const obstacleColors = {
+					wall: 'bg-gray-600 text-white',
+					tree: 'bg-green-700 text-green-200',
+					grass: 'bg-green-500 text-green-100'
+				};
+				classes += ` ${obstacleColors[obstacleInfo.type] || 'bg-gray-600 text-white'}`;
+
+				if (
+					currentGameState.selectedHelper &&
+					canHelperRemoveObstacle(cellValue, currentGameState.selectedHelper)
+				) {
+					classes += ' cursor-pointer hover:bg-red-500 ring-2 ring-red-400';
+				}
+			} else if (cellValue === 3) {
+				classes += ' bg-game-green text-game-dark font-black';
+			} else {
+				classes += ' bg-game-light hover:bg-gray-100';
+			}
 		}
 
 		return classes;
 	}
 
-	// handle clicks on grid cells (for helper tool usage)
 	function handleCellClick(row, col, isMainGrid) {
-		if (!onCellClick) return;
-
 		const mapData = isMainGrid ? currentGameState.mapData : currentGameState.mirroredMapData;
 		const cellValue = mapData?.[row]?.[col];
 
 		// only allow clicking on obstacles when helper is selected
-		if (cellValue === 1 && currentGameState.selectedHelper) {
-			onCellClick(row, col, isMainGrid ? 'main' : 'mirrored');
+		if (
+			currentGameState.selectedHelper &&
+			canHelperRemoveObstacle(cellValue, currentGameState.selectedHelper)
+		) {
+			// call parent callback if provided - parent will handle the actual helper usage
+			if (onCellClick) {
+				onCellClick(row, col, isMainGrid ? 'main' : 'mirrored');
+			}
 		}
 	}
 </script>
 
 {#if currentGameState.mapData && currentGameState.mirroredMapData}
-	<div class="game-grids-container flex items-start justify-center gap-10">
-		<!-- main grid (left side) -->
+	<div class="game-grids-container flex items-start justify-center gap-8">
 		<div class="grid-container">
-			<h3 class="mb-2 text-center font-jersey text-lg">Main Grid</h3>
+			<h3
+				class="mb-3 text-center text-lg font-bold text-game-dark"
+				style="font-family: 'Jersey 10', sans-serif;"
+			>
+				Main Grid
+			</h3>
 
 			<div
-				class="grid border-4 border-game-blue bg-white shadow-lg"
+				class="grid gap-1 rounded-lg border-4 border-game-blue bg-white p-2 shadow-lg"
 				style="grid-template-columns: repeat({gridSize}, minmax(0, 1fr));"
 			>
 				{#each Array(gridSize) as _, row}
 					{#each Array(gridSize) as _, col}
 						<button
 							class={getCellClass(row, col, true)}
-							onclick={() => handleCellClick(row, col, true)}
+							on:click={() => handleCellClick(row, col, true)}
 							type="button"
 						>
 							{getCellContent(row, col, true)}
@@ -109,19 +153,23 @@
 			</div>
 		</div>
 
-		<!-- mirrored grid (right side) -->
 		<div class="grid-container opacity-80">
-			<h3 class="mb-2 text-center font-jersey text-lg">Mirrored Grid</h3>
+			<h3
+				class="mb-3 text-center text-lg font-bold text-game-dark"
+				style="font-family: 'Jersey 10', sans-serif;"
+			>
+				Mirrored Grid
+			</h3>
 
 			<div
-				class="grid border-4 border-game-blue bg-white shadow-lg grayscale"
+				class="grid gap-1 rounded-lg border-4 border-game-blue bg-white p-2 shadow-lg grayscale"
 				style="grid-template-columns: repeat({gridSize}, minmax(0, 1fr));"
 			>
 				{#each Array(gridSize) as _, row}
 					{#each Array(gridSize) as _, col}
 						<button
 							class={getCellClass(row, col, false)}
-							onclick={() => handleCellClick(row, col, false)}
+							on:click={() => handleCellClick(row, col, false)}
 							type="button"
 						>
 							{getCellContent(row, col, false)}
@@ -134,12 +182,7 @@
 {/if}
 
 <style>
-	/* make mirrored grid slightly faded to show it's secondary */
 	.grayscale {
 		filter: grayscale(0.3);
-	}
-
-	.font-jersey {
-		font-family: 'Jersey 10', sans-serif;
 	}
 </style>

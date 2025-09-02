@@ -1,5 +1,5 @@
 <script>
-	import { timeDisplay, gameState } from '$lib/stores/gameStore.js';
+	import { timeDisplay, gameState } from '../..';
 
 	let { gameMode = $bindable('FREEPLAY') } = $props();
 
