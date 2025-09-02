@@ -429,30 +429,14 @@
 			<div class="grid grid-cols-1 gap-6 lg:grid-cols-4">
 				<!-- game grid (main area) -->
 				<div class="lg:col-span-2">
-					<GameGrid
-						{mapData}
-						{mirroredMapData}
-						{currentPosition}
-						{selectedHelper}
-						{gameMode}
-						onCellClick={handleCellClick}
-					/>
+					<GameGrid onCellClick={handleCellClick} />
 				</div>
 
 				<!-- game controls and info (sidebar) -->
 				<div class="space-y-4 lg:col-span-2">
-					<!-- game info -->
-					<GameInfo
-						gameSession={currentSession}
-						{gameMode}
-						mapMetadata={currentSession?.currentPuzzle?.metadata}
-					/>
-
-					<!-- controls -->
+					<GameInfo />
 					<GameControls onMove={handleMove} disabled={status !== 'PLAYING'} />
-
-					<!-- helper tools -->
-					<HelperTools {selectedHelper} onHelperSelect={handleHelperSelect} />
+					<HelperTools onHelperSelect={handleHelperSelect} />
 				</div>
 			</div>
 		</div>
