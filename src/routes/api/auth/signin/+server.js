@@ -6,7 +6,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'reflektor-dev-secret-change-in-production';
-const TOKEN_EXPIRES_IN = '7d'; // 7 days
+const TOKEN_EXPIRES_IN = process.env.TOKEN_EXPIRES_IN || '7d'; // 7 days if not defined
 
 export async function POST({ request }) {
 	try {

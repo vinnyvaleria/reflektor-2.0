@@ -84,7 +84,7 @@ export async function POST({ request }) {
 				email: email || `${username}@guest.local`, // default email for username-only accounts
 				passwordHash,
 				displayName: displayName || username,
-				emailVerified: !email, // a uto-verify if no email provided (username-only accounts)
+				emailVerified: !email, // auto-verify if no email provided (username-only accounts)
 				storyProgress: {},
 				highestUnlocked: 1,
 				totalFreeplayWins: 0,
