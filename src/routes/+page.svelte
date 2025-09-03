@@ -1,7 +1,6 @@
 <script>
 	import { goto } from '$app/navigation';
-	import { userState, storyProgress } from '$lib/stores/gameStore.js';
-	import { authService, leaderboardService } from '$lib/services/gameService.js';
+	import { userState, storyProgress, authService, leaderboardService } from '$lib';
 
 	let showAuth = false;
 	let authMode = 'signin'; // 'signin' or 'signup'

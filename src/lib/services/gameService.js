@@ -11,7 +11,8 @@ import {
 	authService,
 	sessionService,
 	gameplayService,
-	leaderboardService
+	leaderboardService,
+	userState
 } from '$lib';
 
 export const gameService = {
