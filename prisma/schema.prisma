@@ -19,10 +19,10 @@ model User {
     avatar      String?
 
     // game progress 
-    storyProgress     String @default("{}") // {level: {completed: bool, stars: int, bestSteps: int, bestTime: int}}
-    highestUnlocked   Int  @default(1) // track highest unlocked level
-    totalFreeplayWins Int  @default(0)
-    bestFreeplayScore Int  @default(0)
+    storyProgress     Json? // {level: {completed: bool, stars: int, bestSteps: int, bestTime: int}}
+    highestUnlocked   Int   @default(1) // track highest unlocked level
+    totalFreeplayWins Int   @default(0)
+    bestFreeplayScore Int   @default(0)
 
     // story mode statistics for leaderboard
     totalStoryLevelsCompleted  Int    @default(0)
@@ -70,7 +70,7 @@ model GameSession {
     // current puzzle state (for active sessions)
     currentPuzzle   Json? // stores current map data
     currentPosition Json? // stores player position {row, col, mirroredCol}
-    helperUsage     Json  @default("[]") // tracks which helpers were used
+    helperUsage     Json // tracks which helpers were used
 
     // story mode specific
     storyLevel Int? // which story level (1-30)
