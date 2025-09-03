@@ -4,9 +4,9 @@
 
 	import {
 		gameState,
-		gameActions,
 		helpers,
 		helperService,
+		gameService,
 		GameGrid,
 		GameControls,
 		HelperTools,
@@ -31,9 +31,7 @@
 	$: gameMode = $gameState.gameMode;
 	$: status = $gameState.status;
 	$: selectedHelper = $gameState.selectedHelper;
-
-	// available story levels (we only have 5 for testing)
-	const availableLevels = [1, 2, 3, 4, 5];
+	$: availableLevels = gameService.getAvailableLevels().slice(0, 5);
 
 	// start selected story level
 	async function startStoryLevel() {
@@ -42,7 +40,7 @@
 		showCompletion = false;
 
 		try {
-			await gameActions.startStory(selectedLevel, playerName || null);
+			await gameService.startStory(selectedLevel, playerName || null);
 			gameStarted = true;
 		} catch (err) {
 			error = err.message;
@@ -56,16 +54,16 @@
 		if (!currentSession || status !== 'PLAYING') return;
 
 		try {
-			const result = await gameActions.makeMove(direction, currentSession.id);
+			const result = await gameService.makeMove(direction);
 
-			if (result.storyCompleted) {
+			if (result.success && result.data.storyCompleted) {
 				showCompletion = true;
-				completionStats = result.stats;
-				console.log(`story level ${selectedLevel} completed!`, result.stats);
+				completionStats = result.data.stats;
+				console.log(`story level ${selectedLevel} completed!`, result.data.stats);
 			}
 
-			if (result.collision) {
-				console.log(`hit obstacle! rounds used: ${result.gameSession.roundsUsed}`);
+			if (!result.success && result.collision) {
+				console.log(`hit obstacle! rounds used: ${result.data?.gameSession?.roundsUsed}`);
 			}
 		} catch (err) {
 			console.error('move failed:', err.message);
@@ -97,15 +95,6 @@
 				console.log(
 					`✅ ${result.helperUsed} used successfully on ${gridType} grid at (${row}, ${col})`
 				);
-
-				// update game state with the modified maps
-				gameState.update((state) => ({
-					...state,
-					mapData: result.updatedMaps.mainMap,
-					mirroredMapData: result.updatedMaps.mirroredMap,
-					currentSession: result.gameSession,
-					selectedHelper: null // auto-deselected by service
-				}));
 
 				// show success feedback
 				const helperConfig = helperService.getHelperConfig(result.helperUsed);

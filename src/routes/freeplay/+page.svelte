@@ -94,15 +94,6 @@
 					`✅ ${result.helperUsed} used successfully on ${gridType} grid at (${row}, ${col})`
 				);
 
-				// update game state with the modified maps
-				gameState.update((state) => ({
-					...state,
-					mapData: result.updatedMaps.mainMap,
-					mirroredMapData: result.updatedMaps.mirroredMap,
-					currentSession: result.gameSession,
-					selectedHelper: null // auto-deselected by service
-				}));
-
 				// show success feedback
 				const helperConfig = helperService.getHelperConfig(result.helperUsed);
 				showSuccess(

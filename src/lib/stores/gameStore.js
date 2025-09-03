@@ -1,7 +1,7 @@
 // src/lib/stores/gameStore.js
 // https://svelte.dev/docs/svelte/svelte-store
 
-import { writable, derived } from 'svelte/store';
+import { writable, derived, get } from 'svelte/store';
 import { browser } from '$app/environment';
 
 // user authentication state

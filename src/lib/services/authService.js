@@ -1,14 +1,8 @@
 // src/lib/services/authService.js
 
 import { browser } from '$app/environment';
-import {
-	userState,
-	storyProgress,
-	clearGameStorage,
-	authApis,
-	progressService,
-	withLoadingState
-} from '$lib';
+
+import { userState, clearGameStorage, authApis, withLoadingState } from '$lib';
 
 export const authService = {
 	async signup(username, password, email = null, displayName = null) {
@@ -23,16 +17,13 @@ export const authService = {
 		return withLoadingState(userState, async () => {
 			const result = await authApis.signin(username, password, rememberMe);
 
-			// update user state on success
-			userState.update((state) => ({
-				...state,
+			// update store instead as subscriptions will handle the rest
+			userState.set({
 				isLoggedIn: true,
 				user: result.user,
-				token: result.token
-			}));
-
-			await progressService.loadUserProgress(result.user.id);
-			await progressService.syncBrowserProgressToAccount(result.user.id);
+				token: result.token,
+				loading: false
+			});
 
 			return result;
 		});
@@ -44,15 +35,6 @@ export const authService = {
 			user: null,
 			token: null,
 			loading: false
-		});
-
-		storyProgress.set({
-			highestUnlocked: 1,
-			completedLevels: {},
-			totalStars: 0,
-			completionPercentage: 0,
-			averageTime: 0,
-			lastPlayedLevel: 1
 		});
 
 		clearGameStorage();
@@ -70,14 +52,12 @@ export const authService = {
 				const result = await authApis.verifyToken(token);
 
 				if (result.success) {
-					userState.update((state) => ({
-						...state,
+					userState.set({
 						isLoggedIn: true,
 						user: result.user,
-						token: token
-					}));
-
-					await progressService.loadUserProgress(result.user.id);
+						token: token,
+						loading: false
+					});
 				} else {
 					localStorage.removeItem('reflektor_user_token');
 				}
