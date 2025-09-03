@@ -70,7 +70,7 @@ model GameSession {
     // current puzzle state (for active sessions)
     currentPuzzle   Json? // stores current map data
     currentPosition Json? // stores player position {row, col, mirroredCol}
-    helperUsage     Json // tracks which helpers were used
+    helperUsage     Json? // tracks which helpers were used
 
     // story mode specific
     storyLevel Int? // which story level (1-30)
