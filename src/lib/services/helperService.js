@@ -182,7 +182,7 @@ export const helperService = {
 
 	loadHelperState(gameSessionId) {
 		// load helper usage from game session and update existing helpers store
-		return helperApis
+		return await helperApis
 			.getHelperUsage(gameSessionId)
 			.then((result) => {
 				if (result.success) {

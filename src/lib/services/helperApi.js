@@ -15,17 +15,17 @@ export const helperApis = {
 			gridType
 		});
 
-		return apiPost('/api/game/helper', body, 'Failed to use helper tool');
+		return await apiPost('/api/game/helper', body, 'Failed to use helper tool');
 	},
 
 	// get helper usage statistics for a game session
 	async getHelperUsage(gameSessionId) {
-		return apiGet('/api/game/helper/usage', { gameSessionId }, 'Failed to get helper usage');
+		return await apiGet('/api/game/helper/usage', { gameSessionId }, 'Failed to get helper usage');
 	},
 
 	// reset helper usage for a game session (admin/debug function)
 	async resetHelperUsage(gameSessionId) {
 		const body = addUserIdToBody({ gameSessionId });
-		return apiPost('/api/game/helper/reset', body, 'Failed to reset helper usage');
+		return await apiPost('/api/game/helper/reset', body, 'Failed to reset helper usage');
 	}
 };

@@ -16,13 +16,17 @@ export const gameplayService = {
 	async makeMove(direction, helperTool = null) {
 		try {
 			const $gameState = get(gameState);
+			console.log('🎯 Current game state:', $gameState);
 
 			if (!$gameState.currentSession) {
+				console.error('❌ No active game session');
 				throw new Error('No active game session');
 			}
 
+			console.log('🚀 Calling gameApis.move with session:', $gameState.currentSession.id);
 			const result = await gameApis.move($gameState.currentSession.id, direction, helperTool);
 
+			console.log('🎪 Move result:', result);
 			if (result.success) {
 				gameState.update((state) => ({
 					...state,
@@ -82,6 +86,7 @@ export const gameplayService = {
 				};
 			}
 		} catch (error) {
+			console.error('💀 Move failed:', error);
 			console.error('Move failed:', error);
 			throw error;
 		}

@@ -9,13 +9,13 @@ export const leaderboardApis = {
 		const params = { type, limit: limit.toString() };
 		if (difficulty) params.difficulty = difficulty;
 
-		return apiGet('/api/leaderboard', params, 'Failed to get leaderboard');
+		return await apiGet('/api/leaderboard', params, 'Failed to get leaderboard');
 	},
 
 	async submitScore(gameSessionId) {
 		const $userState = get(userState);
 		const body = addUserIdToBody({ gameSessionId });
 
-		return apiPost('/api/leaderboard', body, 'Failed to submit score');
+		return await apiPost('/api/leaderboard', body, 'Failed to submit score');
 	}
 };

@@ -18,11 +18,11 @@ export const storyApis = {
 			playerName,
 			resumeSession
 		});
-		return apiPost('/api/story/start', body, 'Failed to start story mode');
+		return await apiPost('/api/story/start', body, 'Failed to start story mode');
 	},
 
 	async getProgress() {
 		const userId = getCurrentUserId();
-		return apiGet('/api/story/progress', { userId }, 'Failed to get story progress');
+		return await apiGet('/api/story/progress', { userId }, 'Failed to get story progress');
 	}
 };

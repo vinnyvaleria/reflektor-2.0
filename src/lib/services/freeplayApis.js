@@ -12,7 +12,7 @@ export const freeplayApis = {
 			playerName
 		});
 
-		return apiPost('/api/freeplay/start', body, 'Failed to start freeplay');
+		return await apiPost('/api/freeplay/start', body, 'Failed to start freeplay');
 	},
 
 	async getActiveSession() {
@@ -21,6 +21,6 @@ export const freeplayApis = {
 		if (!$userState.user?.id) return { success: false, reason: 'No user logged in' };
 
 		const userId = $userState.user.id;
-		return apiGet('/api/freeplay/start', { userId }, 'Get active session failed');
+		return await apiGet('/api/freeplay/start', { userId }, 'Get active session failed');
 	}
 };
