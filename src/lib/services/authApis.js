@@ -6,13 +6,13 @@ export const authApis = {
 	async signup(username, password, email = null, displayName = null) {
 		const body = { username, password, email, displayName };
 
-		return apiPost('/api/auth/signup', body, 'Signup failed');
+		return await apiPost('/api/auth/signup', body, 'Signup failed');
 	},
 
 	async signin(username, password, rememberMe = false) {
 		const body = { username, password, rememberMe };
 
-		const response = apiPost('/api/auth/signin', body);
+		const response = await apiPost('/api/auth/signin', body);
 
 		if (response.success) {
 			// store token in localStorage
@@ -21,16 +21,16 @@ export const authApis = {
 			}
 			return { success: true, user: response.data.user, token: response.data.token };
 		} else {
-			throw new Error(data.error || 'Sign in failed');
+			throw new Error(response.data.error || 'Sign in failed');
 		}
 	},
 
 	async verifyToken(token) {
-		return apiPut('/api/auth/signin', { token });
+		return await apiPut('/api/auth/signin', { token });
 	},
 
 	async checkUsername(username) {
-		const response = apiGet(`/api/auth/signup`, { username }, 'Failed to find username');
+		const response = await apiGet(`/api/auth/signup`, { username }, 'Failed to find username');
 		return response.data.available;
 	}
 };
