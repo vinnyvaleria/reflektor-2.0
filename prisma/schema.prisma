@@ -3,7 +3,8 @@ generator client {
 }
 
 datasource db {
-    provider = "sqlite" // this will be updated to postgresql right before deployment
+    provider = "sqlite" 
+    // provider = "postgresql"
     url      = env("DATABASE_URL")
 }
 

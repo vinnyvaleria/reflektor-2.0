@@ -2,7 +2,7 @@
 
 import { get } from 'svelte/store';
 
-import { helpers, gameState, helperApis, incrementStoreValue } from '$lib';
+import { helpers, gameState, incrementStoreValue, apiPost, apiGet, addUserIdToBody } from '$lib';
 
 export const HELPER_CONFIG = {
 	hammer: {
@@ -34,6 +34,32 @@ export const HELPER_CONFIG = {
 	}
 };
 
+const helperApi = {
+	// use a helper tool to remove an obstacle
+	async useHelper(gameSessionId, helperType, targetRow, targetCol, gridType) {
+		const body = addUserIdToBody({
+			gameSessionId,
+			helperType,
+			targetRow,
+			targetCol,
+			gridType
+		});
+
+		return await apiPost('/api/game/helper', body, 'Failed to use helper tool');
+	},
+
+	// get helper usage statistics for a game session
+	async getHelperUsage(gameSessionId) {
+		return await apiGet('/api/game/helper/usage', { gameSessionId }, 'Failed to get helper usage');
+	},
+
+	// reset helper usage for a game session (admin/debug function)
+	async resetHelperUsage(gameSessionId) {
+		const body = addUserIdToBody({ gameSessionId });
+		return await apiPost('/api/game/helper/reset', body, 'Failed to reset helper usage');
+	}
+};
+
 export const helperService = {
 	async useHelper(gameSessionId, helperType, targetRow, targetCol, gridType, obstacleCell) {
 		try {
@@ -50,8 +76,8 @@ export const helperService = {
 				throw new Error(`${HELPER_CONFIG[helperType].name} has already been used`);
 			}
 
-			// call the API through helperApis
-			const result = await helperApis.useHelper(
+			// call the API through helperApi
+			const result = await helperApi.useHelper(
 				gameSessionId,
 				helperType,
 				targetRow,
@@ -180,9 +206,9 @@ export const helperService = {
 		}
 	},
 
-	loadHelperState(gameSessionId) {
+	async loadHelperState(gameSessionId) {
 		// load helper usage from game session and update existing helpers store
-		return await helperApis
+		return await helperApi
 			.getHelperUsage(gameSessionId)
 			.then((result) => {
 				if (result.success) {
@@ -213,7 +239,7 @@ export const helperService = {
 
 	async resetHelperUsageForSession(gameSessionId) {
 		try {
-			const result = await helperApis.resetHelperUsage(gameSessionId);
+			const result = await helperApi.resetHelperUsage(gameSessionId);
 
 			if (result.success) {
 				this.resetHelpers(); // update local state using existing pattern

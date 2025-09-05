@@ -23,7 +23,7 @@
 
 		{#if currentGameState.gameMode === 'STORY' && storyLevel}
 			<div class="font-jersey text-lg text-white">
-				<div class="font-bold">level {storyLevel}: {levelName}</div>
+				<div class="font-bold">Level {storyLevel}: {levelName}</div>
 				{#if levelDescription}
 					<div class="text-sm italic text-gray-300">{levelDescription}</div>
 				{/if}
@@ -37,25 +37,25 @@
 			<!-- freeplay stats -->
 			<div class="stat-item">
 				<div class="text-2xl font-bold text-game-green">{puzzlesCompleted}</div>
-				<div class="text-sm text-gray-300">puzzles solved</div>
+				<div class="text-sm text-gray-300">Puzzles Solved</div>
 			</div>
 		{/if}
 
 		<div class="stat-item">
 			<div class="text-2xl font-bold text-game-blue">{totalSteps}</div>
-			<div class="text-sm text-gray-300">total steps</div>
+			<div class="text-sm text-gray-300">Total Steps</div>
 		</div>
 
 		<div class="stat-item">
 			<div class="text-2xl font-bold text-game-secondary">{roundsUsed}</div>
-			<div class="text-sm text-gray-300">obstacles hit</div>
+			<div class="text-sm text-gray-300">Obstacles Hit</div>
 		</div>
 
 		{#if currentGameState.gameMode === 'STORY' && mapMetadata.targetSteps}
 			<!-- story mode targets -->
 			<div class="stat-item">
 				<div class="text-lg font-bold text-yellow-400">{mapMetadata.targetSteps}</div>
-				<div class="text-sm text-gray-300">target steps</div>
+				<div class="text-sm text-gray-300">Target Steps</div>
 			</div>
 		{/if}
 	</div>

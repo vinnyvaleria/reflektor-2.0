@@ -4,13 +4,38 @@
 import { writable, derived, get } from 'svelte/store';
 import { browser } from '$app/environment';
 
-// user authentication state
-export const userState = writable({
-	isLoggedIn: false,
-	user: null,
-	token: null,
-	loading: false
-});
+// load user data from DB and sync to stores
+export function syncUserDataFromDB(userData) {
+	if (!userData) return;
+
+	// update user state
+	userState.update((state) => ({
+		...state,
+		user: {
+			id: userData.id,
+			username: userData.username,
+			email: userData.email,
+			displayName: userData.displayName,
+			avatar: userData.avatar,
+			// db fields that might be useful
+			highestUnlocked: userData.highestUnlocked,
+			bestFreeplayScore: userData.bestFreeplayScore,
+			totalFreeplayWins: userData.totalFreeplayWins
+		}
+	}));
+
+	// update story progress from DB
+	if (userData.storyProgress) {
+		storyProgress.update((state) => ({
+			...state,
+			completedLevels: userData.storyProgress,
+			totalStars: Object.values(userData.storyProgress || {}).reduce(
+				(sum, level) => sum + (level.stars || 0),
+				0
+			)
+		}));
+	}
+}
 
 // main game state - holds current session data
 export const gameState = writable({
@@ -22,10 +47,26 @@ export const gameState = writable({
 	status: 'PLAYING', // current game status
 	timeLeft: null, // remaining time for freeplay (seconds)
 	selectedHelper: null, // currently selected helper tool
-	currentScore: 0, // real-time score for freeplay
 	levelMetadata: null, // current level info for story mode
-	gameStartTime: null, // track session duration
-	completionStats: null // stats when level/session completes
+	completionStats: null, // stats when level/session completes
+	pauseDuration: 0, // total pause time for accurate timing
+	sessionStats: {
+		startTime: null, // track session duration
+		endTime: null,
+		totalMoves: 0,
+		puzzlesCompleted: 0,
+		roundsUsed: 0,
+		helpersUsed: {},
+		score: 0 // real-time score for freeplay
+	}
+});
+
+// user authentication state
+export const userState = writable({
+	isLoggedIn: false,
+	user: null,
+	token: null,
+	loading: false
 });
 
 // helper tools state - tracks usage and availability
@@ -37,30 +78,84 @@ export const helpers = writable({
 
 // story mode progress state
 export const storyProgress = writable({
-	highestUnlocked: 1, // highest available level
+	currentLevel: 1,
 	completedLevels: {}, // { "1": { stars: 3, bestSteps: 8, bestTime: 25, completed: true } }
 	totalStars: 0,
 	completionPercentage: 0,
-	averageTime: 0,
-	lastPlayedLevel: 1
+	averageTime: 0
 });
 
-// leaderboard state
+// leaderboard state - only store top 10 for each mode
 export const leaderboardState = writable({
-	freeplay: [],
-	story: [],
-	userRank: null,
+	freeplay: {}, // { "1" : {displayName: Name, score: 500} }
+	story: {}, // { "1" : {displayName: Name, averageTime: 25, levelsUnlocked: 5} }
 	loading: false,
 	lastUpdated: null
 });
 
+// to display existing message (error, warning, info)
+export const errorState = writable({
+	message: null,
+	type: null, // 'error', 'warning', 'info'
+	timestamp: null
+});
+
+// derive highest unlocked level
+export const highestUnlockedLevel = derived(storyProgress, ($storyProgress) => {
+	const completed = Object.keys($storyProgress.completedLevels || {})
+		.map(Number)
+		.filter((level) => $storyProgress.completedLevels[level].completed);
+
+	return completed.length > 0 ? Math.max(...completed) + 1 : 1;
+});
+
 // derived store for timer display (converts seconds to mm:ss format)
 export const timeDisplay = derived(gameState, ($gameState) => {
-	if (!$gameState.timeLeft) return null;
-	const minutes = Math.floor($gameState.timeLeft / 60);
-	const seconds = $gameState.timeLeft % 60;
-	return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+	// story mode - count up from start time
+	if ($gameState.gameMode === 'STORY' && $gameState.sessionStats?.startTime) {
+		const start = new Date($gameState.sessionStats.startTime).getTime();
+		const end = $gameState.sessionStats.endTime
+			? new Date($gameState.sessionStats.endTime).getTime()
+			: Date.now();
+		const elapsed = Math.floor((end - start - $gameState.pauseDuration) / 1000);
+		const minutes = Math.floor(elapsed / 60);
+		const seconds = elapsed % 60;
+		return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+	}
+
+	// freeplay mode - count down
+	if ($gameState.gameMode === 'FREEPLAY' && $gameState.timeLeft !== null) {
+		const minutes = Math.floor($gameState.timeLeft / 60);
+		const seconds = $gameState.timeLeft % 60;
+		return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+	}
+
+	return '0:00';
 });
+
+// storing time in completedLevels when level completes:
+export function completeStoryLevel(level, stars, steps) {
+	const $gameState = get(gameState);
+	const start = new Date($gameState.sessionStats.startTime).getTime();
+	const end = $gameState.sessionStats.endTime
+		? new Date($gameState.sessionStats.endTime).getTime()
+		: Date.now();
+	const elapsed = Math.floor((end - start - $gameState.pauseDuration) / 1000);
+
+	storyProgress.update((state) => ({
+		...state,
+		completedLevels: {
+			...state.completedLevels,
+			[level]: {
+				completed: true,
+				stars,
+				bestSteps: steps,
+				bestTime: elapsed,
+				completedAt: new Date().toISOString()
+			}
+		}
+	}));
+}
 
 // helper availability check
 export const helpersAvailable = derived(helpers, ($helpers) => {
@@ -72,13 +167,13 @@ export const helpersAvailable = derived(helpers, ($helpers) => {
 
 // user's current game status
 export const userGameStatus = derived(
-	[userState, gameState, storyProgress],
-	([$userState, $gameState, $storyProgress]) => {
+	[userState, gameState, storyProgress, highestUnlockedLevel],
+	([$userState, $gameState, $storyProgress, $highestUnlockedLevel]) => {
 		return {
 			isGuest: !$userState.isLoggedIn,
 			canAccessLevel: (level) => {
 				if (!$userState.isLoggedIn) return level <= 3; // guests limited to first 3 levels
-				return level <= $storyProgress.highestUnlocked;
+				return level <= $highestUnlockedLevel;
 			},
 			currentSession: $gameState.currentSession,
 			hasActiveGame: $gameState.status === 'PLAYING'
@@ -105,6 +200,89 @@ export const storyStats = derived(storyProgress, ($storyProgress) => {
 		),
 		perfectLevels: completed.filter((level) => level.stars === 3).length
 	};
+});
+
+// sorted leaderboard for display from lowest rank to highest
+export const sortedLeaderboard = derived(leaderboardState, ($leaderboardState) => {
+	return {
+		// freeplay: Sort by score (highest first)
+		freeplay: Object.entries($leaderboardState.freeplay)
+			.map(([key, data]) => ({ ...data }))
+			.sort((a, b) => b.score - a.score) // Higher score = better rank
+			.map((entry, index) => ({ rank: index + 1, ...entry })),
+
+		// story: Sort by average time (lowest first)
+		story: Object.entries($leaderboardState.story)
+			.map(([key, data]) => ({ ...data }))
+			.sort((a, b) => a.averageTime - b.averageTime) // Lower time = better rank
+			.map((entry, index) => ({ rank: index + 1, ...entry }))
+	};
+});
+
+// sync function to prepare data for User model
+export function prepareUserDataForDB() {
+	const $storyProgress = get(storyProgress);
+	const $userState = get(userState);
+	const $highestUnlocked = get(highestUnlockedLevel);
+
+	const completed = Object.values($storyProgress.completedLevels || {}).filter((l) => l.completed);
+
+	const totalTime = completed.reduce((sum, level) => sum + (level.bestTime || 0), 0);
+	const avgTime = completed.length > 0 ? totalTime / completed.length : null;
+
+	return {
+		storyProgress: $storyProgress.completedLevels, // JSON field
+		highestUnlocked: $highestUnlocked,
+		totalStoryLevelsCompleted: completed.length,
+		averageStoryCompletionTime: avgTime,
+		totalStoryTime: totalTime
+	};
+}
+
+// sync function to prepare data for GameSession model
+export function prepareSessionDataForDB() {
+	const $gameState = get(gameState);
+	const $helpers = get(helpers);
+
+	// convert helpers to match DB helperUsage format
+	const helperUsage = Object.entries($gameState.sessionStats.helpersUsed || {}).map(
+		([type, uses]) => ({
+			type,
+			count: uses,
+			timestamp: new Date().toISOString()
+		})
+	);
+
+	return {
+		puzzlesCompleted: $gameState.sessionStats.puzzlesCompleted,
+		totalSteps: $gameState.sessionStats.totalMoves,
+		roundsUsed: $gameState.sessionStats.roundsUsed,
+		score: $gameState.sessionStats.score,
+		currentPuzzle: {
+			mainMap: $gameState.mapData,
+			mirroredMap: $gameState.mirroredMapData,
+			metadata: $gameState.levelMetadata
+		},
+		currentPosition: $gameState.currentPosition,
+		helperUsage: helperUsage
+	};
+}
+
+// calculate and update completionPercentage whenever completedLevels changes
+storyProgress.subscribe(($storyProgress) => {
+	const completed = Object.values($storyProgress.completedLevels || {}).filter(
+		(l) => l.completed
+	).length;
+
+	const percentage = Math.round((completed / 30) * 100);
+
+	// only update if different to avoid infinite loop
+	if ($storyProgress.completionPercentage !== percentage) {
+		storyProgress.update((state) => ({
+			...state,
+			completionPercentage: percentage
+		}));
+	}
 });
 
 // BROWSER STORAGE HELPERS - for players who don't have an account

@@ -1,6 +1,8 @@
-import { fontFamily } from 'tailwindcss/defaultTheme';
+/** @type {import('tailwindcss').Config} */
 
-module.exports = {
+import defaultTheme from 'tailwindcss/defaultTheme';
+
+export default {
 	content: ['./src/**/*.{html,js,svelte,ts}'],
 	theme: {
 		extend: {
@@ -24,9 +26,9 @@ module.exports = {
 
 			// custom fonts
 			fontFamily: {
-				sans: [...fontFamily.sans],
-				jersey: ['Jersey 10', ...fontFamily.sans],
-				pixelify: ['Pixelify Sans', ...fontFamily.mono]
+				sans: [...defaultTheme.fontFamily.sans],
+				// jersey: ['Jersey 10', ...defaultTheme.fontFamily.sans],
+				pixelify: ['Pixelify Sans', ...defaultTheme.fontFamily.mono]
 			},
 
 			// custom animations

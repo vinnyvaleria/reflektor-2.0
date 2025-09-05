@@ -1,16 +1,41 @@
 // src/lib/services/progressService.js
+// Consolidated progress service with API calls
 
 import { get } from 'svelte/store';
 import { browser } from '$app/environment';
 
-import { storyProgress, saveGameToStorage, progressApis, withLoadingState } from '$lib';
+import {
+	storyProgress,
+	saveGameToStorage,
+	withLoadingState,
+	getAuthHeaders,
+	apiGet,
+	apiDelete,
+	apiPut
+} from '$lib';
+
+const progressApi = {
+	async getUserProgress(userId) {
+		return await apiGet('/api/user/progress', { userId }, 'Failed to get user progress');
+	},
+
+	async resetStoryProgress(userId) {
+		const body = { userId, confirmReset: true };
+		return await apiDelete('/api/user/progress', body, 'Failed to reset progress');
+	},
+
+	async syncBrowserProgress(userId, browserProgress) {
+		const body = { userId, browserProgress };
+		return await apiPut('/api/user/progress', body, 'Failed to sync progress');
+	}
+};
 
 export const progressService = {
 	async loadUserProgress(userId) {
 		return withLoadingState(
 			storyProgress,
 			async () => {
-				const result = await progressApis.getUserProgress(userId);
+				const result = await progressApi.getUserProgress(userId);
 
 				if (result.success) {
 					const progress = result.data.user.storyProgress || {};
@@ -44,7 +69,7 @@ export const progressService = {
 		return withLoadingState(
 			storyProgress,
 			async () => {
-				const result = await progressApis.resetStoryProgress(userId);
+				const result = await progressApi.resetStoryProgress(userId);
 
 				if (result.success) {
 					const resetData = {
@@ -110,7 +135,7 @@ export const progressService = {
 			const $storyProgress = get(storyProgress);
 
 			if (Object.keys($storyProgress.completedLevels).length > 0) {
-				await progressApis.syncBrowserProgress(userId, $storyProgress.completedLevels);
+				await progressApi.syncBrowserProgress(userId, $storyProgress.completedLevels);
 				await this.loadUserProgress(userId);
 			}
 		} catch (error) {

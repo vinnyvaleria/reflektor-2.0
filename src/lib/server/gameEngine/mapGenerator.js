@@ -1,6 +1,6 @@
 // src/lib/server/gameEngine/mapGenerator.js
 
-import { STORY_MAPS } from '$lib/server/maps/storyMaps.js';
+import { STORY_MAPS } from '$lib/data/storyMaps.js';
 
 export class MapGenerator {
 	// random map generator for freeplay mode

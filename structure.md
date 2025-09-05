@@ -1,18 +1,9 @@
 .
 ├── ./README.md
-├── ./archive
-│   └── ./archive/milestones.md
 ├── ./eslint.config.js
-├── ./package-lock.json
+├── ./jsconfig.json
 ├── ./package.json
-├── ./postcss.config.js
 ├── ./prisma
-│   ├── ./prisma/dev.db
-│   ├── ./prisma/migrations
-│   │   ├── ./prisma/migrations/20250830030306_add_users_and_leaderboard
-│   │   │   └── ./prisma/migrations/20250830030306_add_users_and_leaderboard/migration.sql
-│   │   └── ./prisma/migrations/migration_lock.toml
-│   ├── ./prisma/prisma.config.js
 │   ├── ./prisma/schema.prisma
 │   └── ./prisma/seed.js
 ├── ./src
@@ -84,7 +75,9 @@
 │   │   ├── ./src/lib/stores
 │   │   │   └── ./src/lib/stores/gameStore.js
 │   │   └── ./src/lib/utils
-│   │       └── ./src/lib/utils/getAuthHeaders.js
+│   │       ├── ./src/lib/utils/apiUtils.js
+│   │       ├── ./src/lib/utils/getAuthHeaders.js
+│   │       └── ./src/lib/utils/storeUtils.js
 │   └── ./src/routes
 │       ├── ./src/routes/+layout.svelte
 │       ├── ./src/routes/+page.svelte
@@ -117,14 +110,19 @@
 │       │       └── ./src/routes/auth/signup/+page.svelte
 │       ├── ./src/routes/freeplay
 │       │   └── ./src/routes/freeplay/+page.svelte
+│       ├── ./src/routes/leaderboard
+│       │   └── ./src/routes/leaderboard/+page.svelte
+│       ├── ./src/routes/levels
+│       │   └── ./src/routes/levels/+page.svelte
+│       ├── ./src/routes/rules
+│       │   └── ./src/routes/rules/+page.svelte
 │       └── ./src/routes/story
 │           └── ./src/routes/story/+page.svelte
 ├── ./static
+│   ├── ./static/api-test.html
 │   └── ./static/robots.txt
 ├── ./structure.md
 ├── ./svelte.config.js
-├── ./tailwind.config.js
-├── ./tsconfig.json
 └── ./vite.config.ts
 
-41 directories, 86 files
+41 directories, 84 files

@@ -3,19 +3,7 @@
 
 import { get } from 'svelte/store';
 
-import { userState } from '$lib';
-
-// get auth headers with token
-export function getAuthHeaders() {
-	const $userState = get(userState);
-	const headers = { 'Content-Type': 'application/json' };
-
-	if ($userState.token) {
-		headers['Authorization'] = `Bearer ${$userState.token}`;
-	}
-
-	return headers;
-}
+import { userState, getAuthHeaders } from '$lib';
 
 export async function apiCall(url, options = {}, errorMessage = 'API call failed') {
 	try {
@@ -38,7 +26,7 @@ export async function apiCall(url, options = {}, errorMessage = 'API call failed
 }
 
 export async function apiPost(url, body, errorMessage = 'POST request failed') {
-	return apiCall(
+	return await apiCall(
 		url,
 		{
 			method: 'POST',
@@ -52,11 +40,11 @@ export async function apiGet(url, params = {}, errorMessage = 'GET request faile
 	const queryString = new URLSearchParams(params).toString();
 	const fullUrl = queryString ? `${url}?${queryString}` : url;
 
-	return apiCall(fullUrl, { method: 'GET' }, errorMessage);
+	return await apiCall(fullUrl, { method: 'GET' }, errorMessage);
 }
 
 export async function apiPut(url, body, errorMessage = 'PUT request failed') {
-	return apiCall(
+	return await apiCall(
 		url,
 		{
 			method: 'PUT',
@@ -72,7 +60,7 @@ export async function apiDelete(url, body = null, errorMessage = 'DELETE request
 		options.body = JSON.stringify(body);
 	}
 
-	return apiCall(url, options, errorMessage);
+	return await apiCall(url, options, errorMessage);
 }
 
 export function getCurrentUserId() {

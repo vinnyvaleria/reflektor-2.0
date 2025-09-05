@@ -1,0 +1,1453 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<link rel="icon" href="/src/lib/assets/images/icon.png" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Reflektor API Testing Suite</title>
+		<style>
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+			}
+
+			body {
+				font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+				background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+				padding: 20px;
+				color: #333;
+			}
+
+			.container {
+				max-width: 1200px;
+				margin: 0 auto;
+			}
+
+			h1 {
+				text-align: center;
+				color: white;
+				margin-bottom: 30px;
+				text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+			}
+
+			.test-section {
+				background: white;
+				border-radius: 10px;
+				padding: 20px;
+				margin-bottom: 20px;
+				box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+			}
+
+			.test-section h2 {
+				color: #764ba2;
+				margin-bottom: 15px;
+				border-bottom: 2px solid #eee;
+				padding-bottom: 10px;
+			}
+
+			.test-case {
+				margin: 15px 0;
+				padding: 15px;
+				background: #f8f9fa;
+				border-radius: 5px;
+				border-left: 4px solid #667eea;
+			}
+
+			.test-case h3 {
+				color: #333;
+				margin-bottom: 10px;
+			}
+
+			.input-group {
+				margin: 10px 0;
+				display: flex;
+				gap: 10px;
+				flex-wrap: wrap;
+			}
+
+			.input-group label {
+				font-weight: bold;
+				min-width: 120px;
+				display: flex;
+				align-items: center;
+			}
+
+			.input-group input,
+			.input-group select {
+				flex: 1;
+				padding: 8px;
+				border: 1px solid #ddd;
+				border-radius: 4px;
+				min-width: 200px;
+			}
+
+			button {
+				background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+				color: white;
+				border: none;
+				padding: 10px 20px;
+				border-radius: 5px;
+				cursor: pointer;
+				font-weight: bold;
+				margin: 5px;
+				transition: transform 0.2s;
+			}
+
+			button:hover {
+				transform: scale(1.05);
+			}
+
+			button:disabled {
+				opacity: 0.5;
+				cursor: not-allowed;
+			}
+
+			.response-area {
+				margin-top: 15px;
+				padding: 15px;
+				background: #1e1e1e;
+				color: #0f0;
+				border-radius: 5px;
+				font-family: 'Courier New', monospace;
+				max-height: 300px;
+				overflow-y: auto;
+				display: none;
+			}
+
+			.response-area.show {
+				display: block;
+			}
+
+			.success {
+				background: #d4edda;
+				color: #155724;
+				padding: 10px;
+				border-radius: 5px;
+				margin-top: 10px;
+			}
+
+			.error {
+				background: #f8d7da;
+				color: #721c24;
+				padding: 10px;
+				border-radius: 5px;
+				margin-top: 10px;
+			}
+
+			.warning {
+				background: #fff3cd;
+				color: #856404;
+				padding: 10px;
+				border-radius: 5px;
+				margin-top: 10px;
+			}
+
+			.test-status {
+				display: inline-block;
+				padding: 5px 10px;
+				border-radius: 3px;
+				font-weight: bold;
+				margin-left: 10px;
+			}
+
+			.status-pending {
+				background: #ccc;
+				color: white;
+			}
+			.status-running {
+				background: #ffc107;
+				color: white;
+			}
+			.status-success {
+				background: #28a745;
+				color: white;
+			}
+			.status-failed {
+				background: #dc3545;
+				color: white;
+			}
+
+			.quick-test-buttons {
+				display: flex;
+				gap: 10px;
+				margin: 15px 0;
+				flex-wrap: wrap;
+			}
+
+			.stats {
+				background: white;
+				border-radius: 10px;
+				padding: 20px;
+				margin-bottom: 20px;
+				display: flex;
+				justify-content: space-around;
+				box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+			}
+
+			.stat-item {
+				text-align: center;
+			}
+
+			.stat-value {
+				font-size: 24px;
+				font-weight: bold;
+				color: #667eea;
+			}
+
+			.stat-label {
+				color: #666;
+				margin-top: 5px;
+			}
+
+			.test-log {
+				background: #f1f1f1;
+				padding: 10px;
+				border-radius: 5px;
+				margin-top: 10px;
+				max-height: 200px;
+				overflow-y: auto;
+			}
+
+			.log-entry {
+				padding: 5px;
+				border-bottom: 1px solid #ddd;
+				font-size: 14px;
+			}
+
+			.log-entry.error {
+				color: #dc3545;
+			}
+
+			.log-entry.success {
+				color: #28a745;
+			}
+
+			.json-viewer {
+				background: #282c34;
+				color: #abb2bf;
+				padding: 15px;
+				border-radius: 5px;
+				overflow-x: auto;
+				font-family: 'Fira Code', 'Courier New', monospace;
+				font-size: 14px;
+			}
+
+			.json-key {
+				color: #e06c75;
+			}
+			.json-string {
+				color: #98c379;
+			}
+			.json-number {
+				color: #d19a66;
+			}
+			.json-boolean {
+				color: #56b6c2;
+			}
+			.json-null {
+				color: #c678dd;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<h1>🎮 Reflektor API Testing Suite 🎮</h1>
+
+			<!-- Test Statistics -->
+			<div class="stats">
+				<div class="stat-item">
+					<div class="stat-value" id="totalTests">0</div>
+					<div class="stat-label">Total Tests</div>
+				</div>
+				<div class="stat-item">
+					<div class="stat-value" id="passedTests">0</div>
+					<div class="stat-label">Passed</div>
+				</div>
+				<div class="stat-item">
+					<div class="stat-value" id="failedTests">0</div>
+					<div class="stat-label">Failed</div>
+				</div>
+				<div class="stat-item">
+					<div class="stat-value" id="pendingTests">0</div>
+					<div class="stat-label">Pending</div>
+				</div>
+			</div>
+
+			<!-- Quick Actions -->
+			<div class="test-section">
+				<h2>Quick Test Suites</h2>
+				<div class="quick-test-buttons">
+					<button onclick="runAllTests()">🚀 Run All Tests</button>
+					<button onclick="runAuthTests()">🔐 Test Auth Flow</button>
+					<button onclick="runGameplayTests()">🎮 Test Gameplay</button>
+					<button onclick="runHelperTests()">🛠️ Test Helpers</button>
+					<button onclick="runStoryTests()">📖 Test Story Mode</button>
+					<button onclick="runFreeplayTests()">🎲 Test Freeplay</button>
+					<button onclick="resetTests()">🔄 Reset All</button>
+				</div>
+				<div class="test-log" id="quickTestLog"></div>
+			</div>
+
+			<!-- Authentication Tests -->
+			<div class="test-section">
+				<h2>🔐 Authentication Tests</h2>
+
+				<div class="test-case">
+					<h3>
+						1. Sign Up <span class="test-status status-pending" id="signup-status">Pending</span>
+					</h3>
+					<div class="input-group">
+						<label>Username:</label>
+						<input
+							type="text"
+							id="signup-username"
+							value="testuser_{{ random }}"
+							placeholder="Username"
+						/>
+					</div>
+					<div class="input-group">
+						<label>Password:</label>
+						<input type="password" id="signup-password" value="Test123!" placeholder="Password" />
+					</div>
+					<div class="input-group">
+						<label>Email:</label>
+						<input
+							type="email"
+							id="signup-email"
+							value="test_{{ random }}@example.com"
+							placeholder="Email (optional)"
+						/>
+					</div>
+					<div class="input-group">
+						<label>Display Name:</label>
+						<input
+							type="text"
+							id="signup-displayname"
+							value="Test User"
+							placeholder="Display Name (optional)"
+						/>
+					</div>
+					<button onclick="testSignup()">Test Signup</button>
+					<div class="response-area" id="signup-response"></div>
+				</div>
+
+				<div class="test-case">
+					<h3>
+						2. Sign In <span class="test-status status-pending" id="signin-status">Pending</span>
+					</h3>
+					<div class="input-group">
+						<label>Username:</label>
+						<input type="text" id="signin-username" placeholder="Username" />
+					</div>
+					<div class="input-group">
+						<label>Password:</label>
+						<input type="password" id="signin-password" placeholder="Password" />
+					</div>
+					<button onclick="testSignin()">Test Signin</button>
+					<div class="response-area" id="signin-response"></div>
+				</div>
+			</div>
+
+			<!-- Game Session Tests -->
+			<div class="test-section">
+				<h2>🎮 Game Session Tests</h2>
+
+				<div class="test-case">
+					<h3>
+						3. Start Freeplay
+						<span class="test-status status-pending" id="freeplay-status">Pending</span>
+					</h3>
+					<div class="input-group">
+						<label>Difficulty:</label>
+						<select id="freeplay-difficulty">
+							<option value="EASY">Easy (5x5)</option>
+							<option value="MEDIUM">Medium (7x7)</option>
+							<option value="HARD">Hard (9x9)</option>
+						</select>
+					</div>
+					<div class="input-group">
+						<label>Player Name:</label>
+						<input
+							type="text"
+							id="freeplay-playername"
+							value="GuestPlayer"
+							placeholder="For guest players"
+						/>
+					</div>
+					<button onclick="testStartFreeplay()">Test Start Freeplay</button>
+					<div class="response-area" id="freeplay-response"></div>
+				</div>
+
+				<div class="test-case">
+					<h3>
+						4. Start Story Mode
+						<span class="test-status status-pending" id="story-status">Pending</span>
+					</h3>
+					<div class="input-group">
+						<label>Level:</label>
+						<input type="number" id="story-level" value="1" min="1" max="30" />
+					</div>
+					<div class="input-group">
+						<label>Player Name:</label>
+						<input type="text" id="story-playername" placeholder="For guest players" />
+					</div>
+					<div class="input-group">
+						<label>Resume Session:</label>
+						<select id="story-resume">
+							<option value="false">No</option>
+							<option value="true">Yes</option>
+						</select>
+					</div>
+					<button onclick="testStartStory()">Test Start Story</button>
+					<div class="response-area" id="story-response"></div>
+				</div>
+			</div>
+
+			<!-- Movement Tests -->
+			<div class="test-section">
+				<h2>🕹️ Movement & Gameplay Tests</h2>
+
+				<div class="test-case">
+					<h3>
+						5. Test Movement
+						<span class="test-status status-pending" id="move-status">Pending</span>
+					</h3>
+					<div class="input-group">
+						<label>Session ID:</label>
+						<input type="text" id="move-sessionid" placeholder="Game Session ID" />
+					</div>
+					<div class="input-group">
+						<label>Direction:</label>
+						<select id="move-direction">
+							<option value="up">Up</option>
+							<option value="down">Down</option>
+							<option value="left">Left</option>
+							<option value="right">Right</option>
+						</select>
+					</div>
+					<button onclick="testMove()">Test Move</button>
+					<button onclick="testAllDirections()">Test All Directions</button>
+					<div class="response-area" id="move-response"></div>
+				</div>
+
+				<div class="test-case">
+					<h3>
+						6. Test Helper Usage
+						<span class="test-status status-pending" id="helper-status">Pending</span>
+					</h3>
+					<div class="input-group">
+						<label>Session ID:</label>
+						<input type="text" id="helper-sessionid" placeholder="Game Session ID" />
+					</div>
+					<div class="input-group">
+						<label>Helper Type:</label>
+						<select id="helper-type">
+							<option value="hammer">Hammer (removes walls)</option>
+							<option value="axe">Axe (removes trees)</option>
+							<option value="sickle">Sickle (removes grass)</option>
+						</select>
+					</div>
+					<div class="input-group">
+						<label>Target Row:</label>
+						<input type="number" id="helper-row" value="1" min="0" />
+					</div>
+					<div class="input-group">
+						<label>Target Col:</label>
+						<input type="number" id="helper-col" value="1" min="0" />
+					</div>
+					<div class="input-group">
+						<label>Grid Type:</label>
+						<select id="helper-grid">
+							<option value="main">Main Grid</option>
+							<option value="mirrored">Mirrored Grid</option>
+						</select>
+					</div>
+					<button onclick="testHelper()">Test Helper</button>
+					<div class="response-area" id="helper-response"></div>
+				</div>
+			</div>
+
+			<!-- Leaderboard & Progress Tests -->
+			<div class="test-section">
+				<h2>🏆 Leaderboard & Progress Tests</h2>
+
+				<div class="test-case">
+					<h3>
+						7. Get Leaderboard
+						<span class="test-status status-pending" id="leaderboard-status">Pending</span>
+					</h3>
+					<div class="input-group">
+						<label>Type:</label>
+						<select id="leaderboard-type">
+							<option value="freeplay">Freeplay</option>
+							<option value="story">Story</option>
+						</select>
+					</div>
+					<div class="input-group">
+						<label>Limit:</label>
+						<input type="number" id="leaderboard-limit" value="10" min="1" max="100" />
+					</div>
+					<button onclick="testLeaderboard()">Test Leaderboard</button>
+					<div class="response-area" id="leaderboard-response"></div>
+				</div>
+
+				<div class="test-case">
+					<h3>
+						8. Get User Progress
+						<span class="test-status status-pending" id="progress-status">Pending</span>
+					</h3>
+					<div class="input-group">
+						<label>User ID:</label>
+						<input type="text" id="progress-userid" placeholder="User ID" />
+					</div>
+					<button onclick="testProgress()">Test Progress</button>
+					<div class="response-area" id="progress-response"></div>
+				</div>
+			</div>
+
+			<!-- Edge Case Tests -->
+			<div class="test-section">
+				<h2>⚠️ Edge Case & Error Tests</h2>
+
+				<div class="test-case">
+					<h3>9. Test Error Handling</h3>
+					<button onclick="testInvalidAuth()">Invalid Login</button>
+					<button onclick="testOutOfBounds()">Out of Bounds Move</button>
+					<button onclick="testInvalidHelper()">Invalid Helper Usage</button>
+					<button onclick="testGuestLevelLimit()">Guest Level Limit</button>
+					<button onclick="testDuplicateUsername()">Duplicate Username</button>
+					<div class="response-area" id="error-response"></div>
+				</div>
+			</div>
+
+			<!-- Postman Collection Export -->
+			<div class="test-section">
+				<h2>📦 Export for Postman</h2>
+				<button onclick="exportPostmanCollection()">Download Postman Collection</button>
+				<button onclick="copyEnvironmentVars()">Copy Environment Variables</button>
+				<div class="warning" style="margin-top: 15px">
+					<strong>Base URL:</strong> <span id="baseUrl">http://localhost:5173</span><br />
+					<strong>Note:</strong> Update the base URL according to your deployment environment.
+				</div>
+			</div>
+		</div>
+
+		<script>
+			// Test state management
+			let testState = {
+				totalTests: 0,
+				passedTests: 0,
+				failedTests: 0,
+				pendingTests: 9,
+				currentToken: null,
+				currentUserId: null,
+				currentSessionId: null,
+				testUsername: null,
+				testPassword: null
+			};
+
+			// Update the base URL according to your environment
+			const BASE_URL = 'http://localhost:5173';
+
+			// Utility functions
+			function generateRandomString() {
+				return Math.random().toString(36).substring(2, 8);
+			}
+
+			function updateStats() {
+				document.getElementById('totalTests').textContent = testState.totalTests;
+				document.getElementById('passedTests').textContent = testState.passedTests;
+				document.getElementById('failedTests').textContent = testState.failedTests;
+				document.getElementById('pendingTests').textContent = testState.pendingTests;
+			}
+
+			function setTestStatus(testId, status) {
+				const element = document.getElementById(testId + '-status');
+				if (element) {
+					element.className = 'test-status status-' + status;
+					element.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+				}
+			}
+
+			function showResponse(elementId, data, isSuccess = true) {
+				const element = document.getElementById(elementId);
+				element.classList.add('show');
+
+				// Format JSON response
+				const formatted = JSON.stringify(data, null, 2);
+				element.innerHTML = `<pre>${escapeHtml(formatted)}</pre>`;
+
+				// Add success/error indicator
+				if (data.error) {
+					element.style.borderLeft = '5px solid #dc3545';
+				} else {
+					element.style.borderLeft = '5px solid #28a745';
+				}
+			}
+
+			function escapeHtml(text) {
+				const map = {
+					'&': '&amp;',
+					'<': '&lt;',
+					'>': '&gt;',
+					'"': '&quot;',
+					"'": '&#039;'
+				};
+				return text.replace(/[&<>"']/g, (m) => map[m]);
+			}
+
+			function addLogEntry(message, type = 'info') {
+				const log = document.getElementById('quickTestLog');
+				const entry = document.createElement('div');
+				entry.className = `log-entry ${type}`;
+				entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+				log.appendChild(entry);
+				log.scrollTop = log.scrollHeight;
+			}
+
+			// API Test Functions
+			async function testSignup() {
+				setTestStatus('signup', 'running');
+				const random = generateRandomString();
+				const username = document
+					.getElementById('signup-username')
+					.value.replace('{{random}}', random);
+				const password = document.getElementById('signup-password').value;
+				const email = document.getElementById('signup-email').value.replace('{{random}}', random);
+				const displayName = document.getElementById('signup-displayname').value;
+
+				testState.testUsername = username;
+				testState.testPassword = password;
+
+				try {
+					const response = await fetch(`${BASE_URL}/api/auth/signup`, {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ username, password, email, displayName })
+					});
+
+					const data = await response.json();
+					showResponse('signup-response', data);
+
+					if (response.ok) {
+						setTestStatus('signup', 'success');
+						testState.passedTests++;
+						addLogEntry(`✅ Signup successful for user: ${username}`, 'success');
+					} else {
+						setTestStatus('signup', 'failed');
+						testState.failedTests++;
+						addLogEntry(`❌ Signup failed: ${data.error}`, 'error');
+					}
+				} catch (error) {
+					setTestStatus('signup', 'failed');
+					testState.failedTests++;
+					showResponse('signup-response', { error: error.message });
+					addLogEntry(`❌ Signup error: ${error.message}`, 'error');
+				}
+
+				testState.totalTests++;
+				testState.pendingTests--;
+				updateStats();
+			}
+
+			async function testSignin() {
+				setTestStatus('signin', 'running');
+				const username = document.getElementById('signin-username').value || testState.testUsername;
+				const password = document.getElementById('signin-password').value || testState.testPassword;
+
+				try {
+					const response = await fetch(`${BASE_URL}/api/auth/signin`, {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ username, password })
+					});
+
+					const data = await response.json();
+					showResponse('signin-response', data);
+
+					if (response.ok && data.token) {
+						setTestStatus('signin', 'success');
+						testState.passedTests++;
+						testState.currentToken = data.token;
+						testState.currentUserId = data.user?.id;
+						addLogEntry(`✅ Signin successful. Token received.`, 'success');
+					} else {
+						setTestStatus('signin', 'failed');
+						testState.failedTests++;
+						addLogEntry(`❌ Signin failed: ${data.error}`, 'error');
+					}
+				} catch (error) {
+					setTestStatus('signin', 'failed');
+					testState.failedTests++;
+					showResponse('signin-response', { error: error.message });
+					addLogEntry(`❌ Signin error: ${error.message}`, 'error');
+				}
+
+				testState.totalTests++;
+				testState.pendingTests--;
+				updateStats();
+			}
+
+			async function testStartFreeplay() {
+				setTestStatus('freeplay', 'running');
+				const difficulty = document.getElementById('freeplay-difficulty').value;
+				const playerName = document.getElementById('freeplay-playername').value;
+
+				const headers = { 'Content-Type': 'application/json' };
+				if (testState.currentToken) {
+					headers['Authorization'] = `Bearer ${testState.currentToken}`;
+				}
+
+				try {
+					const body = {
+						difficulty,
+						timeLimit: 180,
+						playerName: testState.currentToken ? null : playerName,
+						userId: testState.currentUserId
+					};
+
+					const response = await fetch(`${BASE_URL}/api/freeplay/start`, {
+						method: 'POST',
+						headers,
+						body: JSON.stringify(body)
+					});
+
+					const data = await response.json();
+					showResponse('freeplay-response', data);
+
+					if (response.ok && data.success) {
+						setTestStatus('freeplay', 'success');
+						testState.passedTests++;
+						testState.currentSessionId = data.gameSession?.id;
+						document.getElementById('move-sessionid').value = testState.currentSessionId;
+						document.getElementById('helper-sessionid').value = testState.currentSessionId;
+						addLogEntry(
+							`✅ Freeplay started. Session ID: ${testState.currentSessionId}`,
+							'success'
+						);
+					} else {
+						setTestStatus('freeplay', 'failed');
+						testState.failedTests++;
+						addLogEntry(`❌ Freeplay start failed: ${data.error}`, 'error');
+					}
+				} catch (error) {
+					setTestStatus('freeplay', 'failed');
+					testState.failedTests++;
+					showResponse('freeplay-response', { error: error.message });
+					addLogEntry(`❌ Freeplay error: ${error.message}`, 'error');
+				}
+
+				testState.totalTests++;
+				testState.pendingTests--;
+				updateStats();
+			}
+
+			async function testStartStory() {
+				setTestStatus('story', 'running');
+				const level = parseInt(document.getElementById('story-level').value);
+				const playerName = document.getElementById('story-playername').value;
+				const resumeSession = document.getElementById('story-resume').value === 'true';
+
+				const headers = { 'Content-Type': 'application/json' };
+				if (testState.currentToken) {
+					headers['Authorization'] = `Bearer ${testState.currentToken}`;
+				}
+
+				try {
+					const body = {
+						level,
+						playerName: testState.currentToken ? null : playerName,
+						userId: testState.currentUserId,
+						resumeSession
+					};
+
+					const response = await fetch(`${BASE_URL}/api/story/start`, {
+						method: 'POST',
+						headers,
+						body: JSON.stringify(body)
+					});
+
+					const data = await response.json();
+					showResponse('story-response', data);
+
+					if (response.ok && data.success) {
+						setTestStatus('story', 'success');
+						testState.passedTests++;
+						testState.currentSessionId = data.gameSession?.id;
+						addLogEntry(`✅ Story mode started. Level: ${level}`, 'success');
+					} else {
+						setTestStatus('story', 'failed');
+						testState.failedTests++;
+						addLogEntry(`❌ Story start failed: ${data.error}`, 'error');
+					}
+				} catch (error) {
+					setTestStatus('story', 'failed');
+					testState.failedTests++;
+					showResponse('story-response', { error: error.message });
+					addLogEntry(`❌ Story error: ${error.message}`, 'error');
+				}
+
+				testState.totalTests++;
+				testState.pendingTests--;
+				updateStats();
+			}
+
+			async function testMove() {
+				setTestStatus('move', 'running');
+				const gameSessionId =
+					document.getElementById('move-sessionid').value || testState.currentSessionId;
+				const direction = document.getElementById('move-direction').value;
+
+				const headers = { 'Content-Type': 'application/json' };
+				if (testState.currentToken) {
+					headers['Authorization'] = `Bearer ${testState.currentToken}`;
+				}
+
+				try {
+					const response = await fetch(`${BASE_URL}/api/game/move`, {
+						method: 'POST',
+						headers,
+						body: JSON.stringify({ gameSessionId, direction })
+					});
+
+					const data = await response.json();
+					showResponse('move-response', data);
+
+					if (response.ok) {
+						setTestStatus('move', 'success');
+						testState.passedTests++;
+						addLogEntry(`✅ Move ${direction} successful`, 'success');
+					} else {
+						setTestStatus('move', 'failed');
+						testState.failedTests++;
+						addLogEntry(`❌ Move failed: ${data.error}`, 'error');
+					}
+				} catch (error) {
+					setTestStatus('move', 'failed');
+					testState.failedTests++;
+					showResponse('move-response', { error: error.message });
+					addLogEntry(`❌ Move error: ${error.message}`, 'error');
+				}
+
+				testState.totalTests++;
+				updateStats();
+			}
+
+			async function testAllDirections() {
+				const directions = ['up', 'down', 'left', 'right'];
+				for (const dir of directions) {
+					document.getElementById('move-direction').value = dir;
+					await testMove();
+					await new Promise((resolve) => setTimeout(resolve, 500));
+				}
+			}
+
+			async function testHelper() {
+				setTestStatus('helper', 'running');
+				const gameSessionId =
+					document.getElementById('helper-sessionid').value || testState.currentSessionId;
+				const helperType = document.getElementById('helper-type').value;
+				const targetRow = parseInt(document.getElementById('helper-row').value);
+				const targetCol = parseInt(document.getElementById('helper-col').value);
+				const gridType = document.getElementById('helper-grid').value;
+
+				const headers = { 'Content-Type': 'application/json' };
+				if (testState.currentToken) {
+					headers['Authorization'] = `Bearer ${testState.currentToken}`;
+				}
+
+				try {
+					const response = await fetch(`${BASE_URL}/api/game/helper`, {
+						method: 'POST',
+						headers,
+						body: JSON.stringify({
+							gameSessionId,
+							helperType,
+							targetRow,
+							targetCol,
+							gridType
+						})
+					});
+
+					const data = await response.json();
+					showResponse('helper-response', data);
+
+					if (response.ok && data.success) {
+						setTestStatus('helper', 'success');
+						testState.passedTests++;
+						addLogEntry(`✅ Helper ${helperType} used successfully`, 'success');
+					} else {
+						setTestStatus('helper', 'failed');
+						testState.failedTests++;
+						addLogEntry(`❌ Helper failed: ${data.error}`, 'error');
+					}
+				} catch (error) {
+					setTestStatus('helper', 'failed');
+					testState.failedTests++;
+					showResponse('helper-response', { error: error.message });
+					addLogEntry(`❌ Helper error: ${error.message}`, 'error');
+				}
+
+				testState.totalTests++;
+				updateStats();
+			}
+
+			async function testLeaderboard() {
+				setTestStatus('leaderboard', 'running');
+				const type = document.getElementById('leaderboard-type').value;
+				const limit = document.getElementById('leaderboard-limit').value;
+
+				try {
+					const response = await fetch(`${BASE_URL}/api/leaderboard?type=${type}&limit=${limit}`);
+					const data = await response.json();
+					showResponse('leaderboard-response', data);
+
+					if (response.ok) {
+						setTestStatus('leaderboard', 'success');
+						testState.passedTests++;
+						addLogEntry(
+							`✅ Leaderboard fetched: ${data.leaderboard?.length || 0} entries`,
+							'success'
+						);
+					} else {
+						setTestStatus('leaderboard', 'failed');
+						testState.failedTests++;
+						addLogEntry(`❌ Leaderboard failed: ${data.error}`, 'error');
+					}
+				} catch (error) {
+					setTestStatus('leaderboard', 'failed');
+					testState.failedTests++;
+					showResponse('leaderboard-response', { error: error.message });
+					addLogEntry(`❌ Leaderboard error: ${error.message}`, 'error');
+				}
+
+				testState.totalTests++;
+				updateStats();
+			}
+
+			async function testProgress() {
+				setTestStatus('progress', 'running');
+				const userId = document.getElementById('progress-userid').value || testState.currentUserId;
+
+				try {
+					const response = await fetch(`${BASE_URL}/api/user/progress?userId=${userId}`);
+					const data = await response.json();
+					showResponse('progress-response', data);
+
+					if (response.ok && data.success) {
+						setTestStatus('progress', 'success');
+						testState.passedTests++;
+						addLogEntry(`✅ User progress fetched successfully`, 'success');
+					} else {
+						setTestStatus('progress', 'failed');
+						testState.failedTests++;
+						addLogEntry(`❌ Progress failed: ${data.error}`, 'error');
+					}
+				} catch (error) {
+					setTestStatus('progress', 'failed');
+					testState.failedTests++;
+					showResponse('progress-response', { error: error.message });
+					addLogEntry(`❌ Progress error: ${error.message}`, 'error');
+				}
+
+				testState.totalTests++;
+				updateStats();
+			}
+
+			// Edge case tests
+			async function testInvalidAuth() {
+				addLogEntry('Testing invalid authentication...', 'info');
+				try {
+					const response = await fetch(`${BASE_URL}/api/auth/signin`, {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({
+							username: 'nonexistent',
+							password: 'wrongpass'
+						})
+					});
+					const data = await response.json();
+					showResponse('error-response', data);
+
+					if (!response.ok) {
+						addLogEntry('✅ Invalid auth correctly rejected', 'success');
+					} else {
+						addLogEntry('❌ Invalid auth should have failed!', 'error');
+					}
+				} catch (error) {
+					addLogEntry(`Error: ${error.message}`, 'error');
+				}
+			}
+
+			async function testOutOfBounds() {
+				addLogEntry('Testing out of bounds movement...', 'info');
+				if (!testState.currentSessionId) {
+					addLogEntry('❌ No active session. Start a game first.', 'error');
+					return;
+				}
+
+				try {
+					// Try to move way out of bounds
+					const response = await fetch(`${BASE_URL}/api/game/move`, {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({
+							gameSessionId: testState.currentSessionId,
+							direction: 'up'
+						})
+					});
+
+					// Repeat to ensure out of bounds
+					for (let i = 0; i < 20; i++) {
+						await fetch(`${BASE_URL}/api/game/move`, {
+							method: 'POST',
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify({
+								gameSessionId: testState.currentSessionId,
+								direction: 'up'
+							})
+						});
+					}
+
+					const data = await response.json();
+					showResponse('error-response', data);
+					addLogEntry('✅ Out of bounds handled correctly', 'success');
+				} catch (error) {
+					addLogEntry(`Error: ${error.message}`, 'error');
+				}
+			}
+
+			async function testInvalidHelper() {
+				addLogEntry('Testing invalid helper usage...', 'info');
+				if (!testState.currentSessionId) {
+					addLogEntry('❌ No active session. Start a game first.', 'error');
+					return;
+				}
+
+				try {
+					// Try to use helper on empty cell
+					const response = await fetch(`${BASE_URL}/api/game/helper`, {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({
+							gameSessionId: testState.currentSessionId,
+							helperType: 'hammer',
+							targetRow: 0,
+							targetCol: 0,
+							gridType: 'main'
+						})
+					});
+
+					const data = await response.json();
+					showResponse('error-response', data);
+
+					if (!response.ok) {
+						addLogEntry('✅ Invalid helper use correctly rejected', 'success');
+					} else {
+						addLogEntry('❌ Invalid helper should have failed!', 'error');
+					}
+				} catch (error) {
+					addLogEntry(`Error: ${error.message}`, 'error');
+				}
+			}
+
+			async function testGuestLevelLimit() {
+				addLogEntry('Testing guest level limit...', 'info');
+				try {
+					const response = await fetch(`${BASE_URL}/api/story/start`, {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({
+							level: 5,
+							playerName: 'GuestPlayer'
+						})
+					});
+
+					const data = await response.json();
+					showResponse('error-response', data);
+
+					if (!response.ok && data.error?.includes('Create an account')) {
+						addLogEntry('✅ Guest level limit correctly enforced', 'success');
+					} else {
+						addLogEntry('❌ Guest should be limited to level 3!', 'error');
+					}
+				} catch (error) {
+					addLogEntry(`Error: ${error.message}`, 'error');
+				}
+			}
+
+			async function testDuplicateUsername() {
+				addLogEntry('Testing duplicate username...', 'info');
+				const username = 'duplicate_test_' + generateRandomString();
+
+				try {
+					// First signup
+					await fetch(`${BASE_URL}/api/auth/signup`, {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({
+							username,
+							password: 'Test123!',
+							email: `${username}@test.com`
+						})
+					});
+
+					// Try duplicate
+					const response = await fetch(`${BASE_URL}/api/auth/signup`, {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({
+							username,
+							password: 'Test123!',
+							email: `${username}2@test.com`
+						})
+					});
+
+					const data = await response.json();
+					showResponse('error-response', data);
+
+					if (!response.ok && data.error?.includes('already exists')) {
+						addLogEntry('✅ Duplicate username correctly rejected', 'success');
+					} else {
+						addLogEntry('❌ Duplicate username should fail!', 'error');
+					}
+				} catch (error) {
+					addLogEntry(`Error: ${error.message}`, 'error');
+				}
+			}
+
+			// Test suite runners
+			async function runAllTests() {
+				addLogEntry('🚀 Starting full test suite...', 'info');
+				resetTests();
+
+				// Run tests in sequence
+				await testSignup();
+				await new Promise((r) => setTimeout(r, 1000));
+
+				await testSignin();
+				await new Promise((r) => setTimeout(r, 1000));
+
+				await testStartFreeplay();
+				await new Promise((r) => setTimeout(r, 1000));
+
+				await testMove();
+				await new Promise((r) => setTimeout(r, 1000));
+
+				await testHelper();
+				await new Promise((r) => setTimeout(r, 1000));
+
+				await testStartStory();
+				await new Promise((r) => setTimeout(r, 1000));
+
+				await testLeaderboard();
+				await new Promise((r) => setTimeout(r, 1000));
+
+				await testProgress();
+
+				addLogEntry(
+					`✅ Test suite complete! Passed: ${testState.passedTests}, Failed: ${testState.failedTests}`,
+					'success'
+				);
+			}
+
+			async function runAuthTests() {
+				addLogEntry('🔐 Running authentication tests...', 'info');
+				await testSignup();
+				await new Promise((r) => setTimeout(r, 1000));
+				await testSignin();
+				await testInvalidAuth();
+				await testDuplicateUsername();
+			}
+
+			async function runGameplayTests() {
+				addLogEntry('🎮 Running gameplay tests...', 'info');
+				if (!testState.currentSessionId) {
+					await testStartFreeplay();
+					await new Promise((r) => setTimeout(r, 1000));
+				}
+				await testMove();
+				await testAllDirections();
+				await testOutOfBounds();
+			}
+
+			async function runHelperTests() {
+				addLogEntry('🛠️ Running helper tests...', 'info');
+				if (!testState.currentSessionId) {
+					await testStartFreeplay();
+					await new Promise((r) => setTimeout(r, 1000));
+				}
+				await testHelper();
+				await testInvalidHelper();
+			}
+
+			async function runStoryTests() {
+				addLogEntry('📖 Running story mode tests...', 'info');
+				await testStartStory();
+				await testGuestLevelLimit();
+			}
+
+			async function runFreeplayTests() {
+				addLogEntry('🎲 Running freeplay tests...', 'info');
+				await testStartFreeplay();
+				await new Promise((r) => setTimeout(r, 1000));
+				await testMove();
+			}
+
+			function resetTests() {
+				testState = {
+					totalTests: 0,
+					passedTests: 0,
+					failedTests: 0,
+					pendingTests: 9,
+					currentToken: null,
+					currentUserId: null,
+					currentSessionId: null,
+					testUsername: null,
+					testPassword: null
+				};
+
+				// Reset all status indicators
+				const statuses = [
+					'signup',
+					'signin',
+					'freeplay',
+					'story',
+					'move',
+					'helper',
+					'leaderboard',
+					'progress'
+				];
+				statuses.forEach((id) => setTestStatus(id, 'pending'));
+
+				updateStats();
+				document.getElementById('quickTestLog').innerHTML = '';
+				addLogEntry('Test suite reset', 'info');
+			}
+
+			// Postman export functions
+			function exportPostmanCollection() {
+				const collection = {
+					info: {
+						name: 'Reflektor API Collection',
+						description: 'Complete API test collection for Reflektor game',
+						schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json'
+					},
+					item: [
+						{
+							name: 'Authentication',
+							item: [
+								{
+									name: 'Sign Up',
+									request: {
+										method: 'POST',
+										header: [{ key: 'Content-Type', value: 'application/json' }],
+										body: {
+											mode: 'raw',
+											raw: JSON.stringify(
+												{
+													username: '{{username}}',
+													password: '{{password}}',
+													email: '{{email}}',
+													displayName: '{{displayName}}'
+												},
+												null,
+												2
+											)
+										},
+										url: '{{baseUrl}}/api/auth/signup'
+									}
+								},
+								{
+									name: 'Sign In',
+									request: {
+										method: 'POST',
+										header: [{ key: 'Content-Type', value: 'application/json' }],
+										body: {
+											mode: 'raw',
+											raw: JSON.stringify(
+												{
+													username: '{{username}}',
+													password: '{{password}}'
+												},
+												null,
+												2
+											)
+										},
+										url: '{{baseUrl}}/api/auth/signin'
+									}
+								}
+							]
+						},
+						{
+							name: 'Game Sessions',
+							item: [
+								{
+									name: 'Start Freeplay',
+									request: {
+										method: 'POST',
+										header: [
+											{ key: 'Content-Type', value: 'application/json' },
+											{ key: 'Authorization', value: 'Bearer {{token}}' }
+										],
+										body: {
+											mode: 'raw',
+											raw: JSON.stringify(
+												{
+													difficulty: 'EASY',
+													timeLimit: 180,
+													playerName: 'GuestPlayer',
+													userId: '{{userId}}'
+												},
+												null,
+												2
+											)
+										},
+										url: '{{baseUrl}}/api/freeplay/start'
+									}
+								},
+								{
+									name: 'Start Story',
+									request: {
+										method: 'POST',
+										header: [
+											{ key: 'Content-Type', value: 'application/json' },
+											{ key: 'Authorization', value: 'Bearer {{token}}' }
+										],
+										body: {
+											mode: 'raw',
+											raw: JSON.stringify(
+												{
+													level: 1,
+													playerName: null,
+													userId: '{{userId}}',
+													resumeSession: false
+												},
+												null,
+												2
+											)
+										},
+										url: '{{baseUrl}}/api/story/start'
+									}
+								}
+							]
+						},
+						{
+							name: 'Gameplay',
+							item: [
+								{
+									name: 'Move Player',
+									request: {
+										method: 'POST',
+										header: [
+											{ key: 'Content-Type', value: 'application/json' },
+											{ key: 'Authorization', value: 'Bearer {{token}}' }
+										],
+										body: {
+											mode: 'raw',
+											raw: JSON.stringify(
+												{
+													gameSessionId: '{{sessionId}}',
+													direction: 'up'
+												},
+												null,
+												2
+											)
+										},
+										url: '{{baseUrl}}/api/game/move'
+									}
+								},
+								{
+									name: 'Use Helper',
+									request: {
+										method: 'POST',
+										header: [
+											{ key: 'Content-Type', value: 'application/json' },
+											{ key: 'Authorization', value: 'Bearer {{token}}' }
+										],
+										body: {
+											mode: 'raw',
+											raw: JSON.stringify(
+												{
+													gameSessionId: '{{sessionId}}',
+													helperType: 'hammer',
+													targetRow: 1,
+													targetCol: 1,
+													gridType: 'main'
+												},
+												null,
+												2
+											)
+										},
+										url: '{{baseUrl}}/api/game/helper'
+									}
+								}
+							]
+						},
+						{
+							name: 'Leaderboard & Progress',
+							item: [
+								{
+									name: 'Get Leaderboard',
+									request: {
+										method: 'GET',
+										url: {
+											raw: '{{baseUrl}}/api/leaderboard?type=freeplay&limit=10',
+											host: ['{{baseUrl}}'],
+											path: ['api', 'leaderboard'],
+											query: [
+												{ key: 'type', value: 'freeplay' },
+												{ key: 'limit', value: '10' }
+											]
+										}
+									}
+								},
+								{
+									name: 'Get User Progress',
+									request: {
+										method: 'GET',
+										url: {
+											raw: '{{baseUrl}}/api/user/progress?userId={{userId}}',
+											host: ['{{baseUrl}}'],
+											path: ['api', 'user', 'progress'],
+											query: [{ key: 'userId', value: '{{userId}}' }]
+										}
+									}
+								}
+							]
+						}
+					]
+				};
+
+				const blob = new Blob([JSON.stringify(collection, null, 2)], { type: 'application/json' });
+				const url = URL.createObjectURL(blob);
+				const a = document.createElement('a');
+				a.href = url;
+				a.download = 'reflektor-api-collection.json';
+				a.click();
+				URL.revokeObjectURL(url);
+
+				addLogEntry('📦 Postman collection exported!', 'success');
+			}
+
+			function copyEnvironmentVars() {
+				const envVars = `{
+    "baseUrl": "${BASE_URL}",
+    "username": "testuser",
+    "password": "Test123!",
+    "email": "test@example.com",
+    "displayName": "Test User",
+    "token": "",
+    "userId": "",
+    "sessionId": ""
+}`;
+				navigator.clipboard.writeText(envVars);
+				addLogEntry('📋 Environment variables copied to clipboard!', 'success');
+			}
+
+			// Initialize on load
+			updateStats();
+		</script>
+	</body>
+</html>

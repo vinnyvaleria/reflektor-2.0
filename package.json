@@ -11,7 +11,15 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"format": "prettier --write .",
-		"lint": "prettier --check . && eslint ."
+		"lint": "prettier --check . && eslint .",
+		"db:push": "prisma db push",
+		"db:seed": "prisma db seed",
+		"db:setup": "prisma generate && prisma db push && prisma db seed",
+		"db:reset": "prisma db push --force-reset && prisma db seed",
+		"db:studio": "prisma studio",
+		"test:api": "open static/api-test.html",
+		"deploy": "vercel",
+		"deploy:prod": "vercel --prod"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^1.2.5",

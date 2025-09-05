@@ -2,7 +2,7 @@
 // populate database with initial data - to work with later on
 
 import { PrismaClient } from '@prisma/client';
-import { STORY_MAPS } from '../src/lib/server/maps/storyMaps.js';
+import { STORY_MAPS } from '../src/lib/data/storyMaps.js';
 
 const prisma = new PrismaClient();
 

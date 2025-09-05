@@ -20,7 +20,7 @@
 
 {#if gameMode === 'FREEPLAY' && currentGameState.timeLeft !== null}
 	<div class="timer-container rounded-lg border-2 border-game-blue bg-gray-800 p-4 shadow-lg">
-		<h3 class="mb-2 text-center font-jersey text-lg font-bold text-white">time remaining</h3>
+		<h3 class="mb-2 text-center font-jersey text-lg font-bold text-white">Time Remaining</h3>
 
 		<div class="text-center">
 			<div class="text-4xl font-bold {timerClass} font-jersey">
@@ -29,7 +29,7 @@
 
 			<!-- time up warning -->
 			{#if currentGameState.timeLeft <= 10}
-				<div class="mt-2 animate-bounce font-jersey text-sm font-bold text-red-400">hurry up!</div>
+				<div class="mt-2 animate-bounce font-jersey text-sm font-bold text-red-400">Hurry Up!</div>
 			{/if}
 		</div>
 	</div>

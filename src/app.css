@@ -48,14 +48,14 @@
 @layer components {
 	/* game button base style */
 	.btn-game {
-		@apply shadow-game rounded-lg px-6 py-3 font-bold transition-all duration-200;
+		@apply rounded-lg px-6 py-3 font-bold shadow-game transition-all duration-200;
 		font-family: 'jersey 10', sans-serif;
 		text-transform: lowercase;
 	}
 
 	/* primary game button */
 	.btn-primary {
-		@apply btn-game hover:shadow-game-lg transform bg-game-primary text-white hover:scale-105 hover:bg-game-secondary;
+		@apply btn-game transform bg-game-primary text-white hover:scale-105 hover:bg-game-secondary hover:shadow-game-lg;
 	}
 
 	/* secondary game button */
@@ -72,7 +72,7 @@
 
 	/* game card style */
 	.game-card {
-		@apply shadow-game rounded-lg border-2 border-gray-200 bg-white p-6;
+		@apply rounded-lg border-2 border-gray-200 bg-white p-6 shadow-game;
 	}
 
 	/* input field styling */
