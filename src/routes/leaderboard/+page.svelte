@@ -67,7 +67,8 @@
 		loading = true;
 		error = null;
 		try {
-			await leaderboardService.loadLeaderboard(type);
+			const data = await leaderboardService.loadLeaderboard(type);
+			console.log('Leaderboard data :', data);
 		} catch (err) {
 			error = `Failed to load ${type} leaderboard`;
 			console.error(err);
@@ -132,7 +133,7 @@
 	<title>Leaderboard - REFLEKTOR</title>
 </svelte:head>
 
-<div class="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-900 to-blue-900 p-8">
+<div class="to-blue-900 min-h-screen bg-gradient-to-br from-purple-900 via-indigo-900 p-8">
 	<div class="mx-auto" style="max-width: 1400px;">
 		<!-- Header -->
 		<div class="mb-8 flex items-center justify-between">
@@ -224,7 +225,7 @@
 											<div class="flex flex-col">
 												<span class="text-lg font-bold">{entry.playerName}</span>
 												{#if entry.isRegistered}
-													<span class="text-xs text-green-400">✓ Registered</span>
+													<span class="text-green-400 text-xs">✓ Registered</span>
 												{/if}
 											</div>
 										</td>
@@ -255,7 +256,7 @@
 						<div class="mb-4 text-2xl text-gray-400">No scores yet. Be the first to play!</div>
 						<button
 							on:click={() => goto('/freeplay')}
-							class="rounded-lg bg-blue-600 px-6 py-3 text-white transition-colors hover:bg-blue-500"
+							class="bg-blue-600 hover:bg-blue-500 rounded-lg px-6 py-3 text-white transition-colors"
 						>
 							Play Now
 						</button>
@@ -298,7 +299,7 @@
 											</div>
 										</td>
 										<td class="p-4 text-center">
-											<span class="text-2xl font-bold text-green-400"
+											<span class="text-green-400 text-2xl font-bold"
 												>{formatTime(entry.averageTime)}</span
 											>
 										</td>
@@ -312,7 +313,7 @@
 													class="h-4 w-full max-w-[100px] overflow-hidden rounded-full bg-gray-700"
 												>
 													<div
-														class="h-full bg-gradient-to-r from-green-500 to-green-600 transition-all"
+														class="from-green-500 to-green-600 h-full bg-gradient-to-r transition-all"
 														style="width: {entry.completionRate}%"
 													></div>
 												</div>
@@ -332,7 +333,7 @@
 						</div>
 						<button
 							on:click={() => goto('/story')}
-							class="rounded-lg bg-green-600 px-6 py-3 text-white transition-colors hover:bg-green-500"
+							class="bg-green-600 hover:bg-green-500 rounded-lg px-6 py-3 text-white transition-colors"
 						>
 							Play Story Mode
 						</button>

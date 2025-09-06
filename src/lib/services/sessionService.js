@@ -1,45 +1,46 @@
 // src/lib/services/sessionService.js
+// Consolidated session service for both freeplay and story modes
 
 import { get } from 'svelte/store';
 import {
 	gameState,
-	userState,
 	helpers,
+	userState,
 	timerService,
 	apiPost,
 	apiGet,
 	getCurrentUserId
 } from '$lib';
 
-// API endpoints
+// API Functions
 const sessionApi = {
-	async startFreeplay(difficulty = 'EASY', playerName = null) {
+	async startFreeplay(difficulty, playerName = null) {
 		const userId = getCurrentUserId();
 		const body = {
 			difficulty,
 			timeLimit: 180,
-			playerName: playerName || null,
-			userId: userId || null
+			playerName: playerName || 'Guest', // Default to 'Guest' if null
+			userId
 		};
-
-		return await apiPost('/api/freeplay/start', body, 'Start freeplay failed');
+		return await apiPost('/api/freeplay/start', body, 'Failed to start freeplay');
 	},
 
-	async startStory(level = 1, playerName = null, resumeSession = false) {
+	async startStory(level, playerName = null, resumeSession = false) {
 		const userId = getCurrentUserId();
 		const body = {
 			level,
-			playerName: playerName || null,
-			userId: userId || null,
+			playerName: playerName || 'Guest', // Default to 'Guest' if null
+			userId,
 			resumeSession
 		};
-
-		return await apiPost('/api/story/start', body, 'Start story failed');
+		return await apiPost('/api/story/start', body, 'Failed to start story mode');
 	},
 
 	async getActiveSession(gameMode = 'FREEPLAY') {
 		const userId = getCurrentUserId();
-		const endpoint = gameMode === 'FREEPLAY' ? '/api/freeplay/active' : '/api/story/active';
+		if (!userId) return { success: false, reason: 'No user logged in' };
+
+		const endpoint = gameMode === 'FREEPLAY' ? '/api/freeplay/start' : '/api/story/start';
 		return await apiGet(endpoint, { userId }, 'Get active session failed');
 	},
 
@@ -55,99 +56,32 @@ export const sessionService = {
 		try {
 			const $userState = get(userState);
 
-			if (!$userState.isLoggedIn && !playerName) {
-				throw new Error('Player name is required for guest players');
-			}
-
-			console.log('[SessionService] Starting freeplay:', { difficulty, playerName });
+			// Remove validation - allow null playerName for guests
+			// Backend will handle 'Guest' as default
 
 			const result = await sessionApi.startFreeplay(difficulty, playerName);
 
-			console.log('[SessionService] API Response received:', {
-				success: result.success,
-				hasGameSession: !!result.data?.gameSession,
-				hasMapData: !!result.data?.mapData
-			});
-
-			if (!result.success) {
-				throw new Error(result.error || 'Failed to start freeplay');
-			}
-
-			// The API returns the exact structure we need
-			const { gameSession, mapData } = result.data;
-
-			if (!gameSession || !mapData) {
-				console.error('[SessionService] Missing data:', {
-					gameSession: !!gameSession,
-					mapData: !!mapData
-				});
-				throw new Error('Invalid response from server');
-			}
-
-			// Extract the arrays from mapData object
-			if (!mapData.mainMap || !mapData.mirroredMap) {
-				console.error('[SessionService] Missing map arrays:', {
-					mainMap: !!mapData.mainMap,
-					mirroredMap: !!mapData.mirroredMap
-				});
-				throw new Error('Invalid map data structure');
-			}
-
-			// Create the new state
-			const newState = {
-				currentSession: gameSession,
-				mapData: mapData.mainMap, // Extract the array
-				mirroredMapData: mapData.mirroredMap, // Extract the array
-				currentPosition: gameSession.currentPosition || { row: 0, col: 0, mirroredCol: 0 },
+			gameState.set({
+				currentSession: result.data.gameSession,
+				mapData: result.data.mapData.mainMap,
+				mirroredMapData: result.data.mapData.mirroredMap,
+				currentPosition: result.data.gameSession.currentPosition,
 				gameMode: 'FREEPLAY',
-				status: gameSession.status || 'PLAYING',
-				timeLeft: gameSession.timeLimit,
+				status: result.data.gameSession.status,
+				timeLeft: result.data.gameSession.timeLimit,
 				selectedHelper: null,
-				currentScore: gameSession.score || 0,
-				levelMetadata: mapData.metadata || null,
-				pauseDuration: 0,
-				sessionStats: {
-					startTime: new Date(),
-					endTime: null,
-					totalMoves: 0,
-					puzzlesCompleted: 0,
-					roundsUsed: 0,
-					helpersUsed: {},
-					score: 0
-				},
+				currentScore: 0,
+				levelMetadata: result.data.mapData.metadata,
+				gameStartTime: new Date(),
 				completionStats: null
-			};
-
-			console.log('[SessionService] Setting game state:', {
-				mapDataLength: newState.mapData?.length,
-				mirroredDataLength: newState.mirroredMapData?.length,
-				position: newState.currentPosition,
-				status: newState.status
 			});
 
-			// Set the state
-			gameState.set(newState);
-
-			// Verify it was set
-			const verifyState = get(gameState);
-			console.log('[SessionService] State verification:', {
-				hasMapData: !!verifyState.mapData,
-				hasMirroredData: !!verifyState.mirroredMapData,
-				position: verifyState.currentPosition
-			});
-
-			// Reset helpers
 			this.resetHelpers();
+			timerService.start(result.data.gameSession.timeLimit);
 
-			// Start timer if time limit exists
-			if (gameSession.timeLimit) {
-				timerService.start(gameSession.timeLimit);
-			}
-
-			console.log('[SessionService] Freeplay started successfully');
 			return result.data;
 		} catch (error) {
-			console.error('[SessionService] Start freeplay failed:', error);
+			console.error('Start freeplay failed:', error);
 			throw error;
 		}
 	},
@@ -160,72 +94,32 @@ export const sessionService = {
 				throw new Error('Create an account to access levels beyond 3');
 			}
 
-			if (!$userState.isLoggedIn && !playerName) {
-				throw new Error('Player name is required for guest players');
-			}
-
-			console.log('[SessionService] Starting story level:', { level, playerName });
+			// Remove validation - allow null playerName for guests
+			// Backend will handle 'Guest' as default
 
 			const result = await sessionApi.startStory(level, playerName, resumeSession);
 
-			if (!result.success) {
-				throw new Error(result.error || 'Failed to start story');
-			}
-
-			// The API returns the exact structure we need
-			const { gameSession, mapData } = result.data;
-
-			if (!gameSession || !mapData) {
-				throw new Error('Invalid response from server');
-			}
-
-			// Extract the arrays from mapData object
-			if (!mapData.mainMap || !mapData.mirroredMap) {
-				throw new Error('Invalid map data structure');
-			}
-
-			// Create the new state
-			const newState = {
-				currentSession: gameSession,
-				mapData: mapData.mainMap, // Extract the array
-				mirroredMapData: mapData.mirroredMap, // Extract the array
-				currentPosition: gameSession.currentPosition || { row: 0, col: 0, mirroredCol: 0 },
+			gameState.set({
+				currentSession: result.data.gameSession,
+				mapData: result.data.mapData.mainMap,
+				mirroredMapData: result.data.mapData.mirroredMap,
+				currentPosition: result.data.gameSession.currentPosition,
 				gameMode: 'STORY',
-				status: gameSession.status || 'PLAYING',
+				status: result.data.gameSession.status,
 				timeLeft: null,
 				selectedHelper: null,
 				currentScore: 0,
-				levelMetadata: mapData.metadata || null,
-				pauseDuration: 0,
-				sessionStats: {
-					startTime: result.data.resumed ? new Date(gameSession.startTime) : new Date(),
-					endTime: null,
-					totalMoves: 0,
-					puzzlesCompleted: 0,
-					roundsUsed: 0,
-					helpersUsed: {},
-					score: 0
-				},
+				levelMetadata: result.data.mapData.metadata,
+				gameStartTime: result.data.resumed
+					? new Date(result.data.gameSession.startTime)
+					: new Date(),
 				completionStats: null
-			};
-
-			console.log('[SessionService] Setting game state:', {
-				mapDataLength: newState.mapData?.length,
-				mirroredDataLength: newState.mirroredMapData?.length,
-				position: newState.currentPosition,
-				status: newState.status
 			});
 
-			// Set the state
-			gameState.set(newState);
-
-			// Reset helpers
 			this.resetHelpers();
-
-			console.log('[SessionService] Story started successfully');
 			return result.data;
 		} catch (error) {
-			console.error('[SessionService] Start story failed:', error);
+			console.error('Start story failed:', error);
 			throw error;
 		}
 	},
@@ -237,21 +131,15 @@ export const sessionService = {
 			if (result.success && result.data.gameSession) {
 				const session = result.data.gameSession;
 
-				console.log('[SessionService] Resuming session:', session);
-
-				// Extract maps from currentPuzzle
-				const currentPuzzle = session.currentPuzzle || {};
-
 				gameState.update((state) => ({
 					...state,
 					currentSession: session,
-					mapData: currentPuzzle.mainMap || null,
-					mirroredMapData: currentPuzzle.mirroredMap || null,
-					currentPosition: session.currentPosition || { row: 0, col: 0, mirroredCol: 0 },
+					mapData: session.currentPuzzle?.mainMap,
+					mirroredMapData: session.currentPuzzle?.mirroredMap,
+					currentPosition: session.currentPosition,
 					gameMode: session.gameMode,
 					status: session.status,
-					timeLeft: result.data.timeRemaining || null,
-					levelMetadata: currentPuzzle.metadata || null
+					timeLeft: result.data.timeRemaining || null
 				}));
 
 				if (gameMode === 'FREEPLAY' && result.data.timeRemaining > 0) {
@@ -263,7 +151,7 @@ export const sessionService = {
 
 			return false;
 		} catch (error) {
-			console.error('[SessionService] Resume session failed:', error);
+			console.error('Resume session failed:', error);
 			return false;
 		}
 	},
@@ -283,7 +171,6 @@ export const sessionService = {
 	},
 
 	resetHelpers() {
-		console.log('[SessionService] Resetting helpers');
 		helpers.set({
 			hammer: { available: 1, used: 0, obstacle: 'wall' },
 			axe: { available: 1, used: 0, obstacle: 'tree' },
@@ -304,7 +191,7 @@ export const sessionService = {
 
 			return [1];
 		} catch (error) {
-			console.error('[SessionService] Failed to get available levels:', error);
+			console.error('Failed to get available levels:', error);
 			return [1];
 		}
 	}

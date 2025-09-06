@@ -1,4 +1,3 @@
-<!-- src/routes/story/+page.svelte -->
 <script>
 	import { onMount, onDestroy } from 'svelte';
 	import { goto } from '$app/navigation';
@@ -320,6 +319,12 @@
 	onMount(() => {
 		const cleanup = setupKeyboardControls();
 		cleanupFunctions.push(cleanup);
+
+		// Auto-start for logged-in users only
+		if (selectedLevel && !isGuest && !gameStarted && !loading && !showCompletion) {
+			startStoryLevel();
+		}
+		// For guests, show the name input form first
 	});
 
 	onDestroy(() => {
@@ -352,7 +357,7 @@
 		{#if showCompletion && completionStats}
 			<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/75">
 				<div
-					class="max-w-md rounded-xl bg-gradient-to-br from-blue-900 to-purple-900 p-8 text-center"
+					class="from-blue-900 max-w-md rounded-xl bg-gradient-to-br to-purple-900 p-8 text-center"
 				>
 					<h2
 						class="mb-4 text-5xl font-black text-white"
@@ -369,12 +374,12 @@
 					<!-- Stats -->
 					<div class="mb-8 grid grid-cols-2 gap-4">
 						<div class="rounded-lg bg-white/10 p-4">
-							<div class="text-3xl font-bold text-blue-400">{completionStats.steps || 0}</div>
+							<div class="text-blue-400 text-3xl font-bold">{completionStats.steps || 0}</div>
 							<div class="text-white/70">Steps Taken</div>
 							<div class="text-sm text-gray-400">Target: {completionStats.targetSteps || '?'}</div>
 						</div>
 						<div class="rounded-lg bg-white/10 p-4">
-							<div class="text-3xl font-bold text-green-400">{completionStats.timeTaken || 0}s</div>
+							<div class="text-green-400 text-3xl font-bold">{completionStats.timeTaken || 0}s</div>
 							<div class="text-white/70">Time Taken</div>
 							<div class="text-sm text-gray-400">Target: {completionStats.targetTime || '?'}s</div>
 						</div>
@@ -393,7 +398,7 @@
 						{#if selectedLevel < 30}
 							<button
 								on:click={playNextLevel}
-								class="flex-1 rounded-xl bg-green-600 py-3 text-xl font-bold text-white transition-all hover:bg-green-500"
+								class="bg-green-600 hover:bg-green-500 flex-1 rounded-xl py-3 text-xl font-bold text-white transition-all"
 								style="font-family: 'Jersey 10', sans-serif;"
 							>
 								NEXT LEVEL →
@@ -444,7 +449,7 @@
 				</div>
 			</div>
 		{:else if !gameStarted}
-			<!-- Start Level Screen (for guests needing name) -->
+			<!-- Start Level Screen -->
 			<div class="mx-auto max-w-md">
 				<div class="rounded-xl bg-white/10 p-8 backdrop-blur-sm">
 					<h2
@@ -454,26 +459,34 @@
 						LEVEL {selectedLevel}
 					</h2>
 
-					{#if isGuest && !playerName}
+					<!-- Always show name input for guests without a name -->
+					{#if isGuest}
 						<div class="mb-6">
-							<label class="mb-2 block text-lg text-white">Your Name:</label>
+							<label class="mb-2 block text-lg text-white" for="playerName">
+								Enter your name to play:
+							</label>
 							<input
+								id="playerName"
 								type="text"
 								bind:value={playerName}
-								placeholder="Enter your name"
-								class="w-full rounded-lg bg-white/20 px-4 py-3 text-white placeholder-white/50 backdrop-blur-sm"
-								on:keydown={(e) => e.key === 'Enter' && startStoryLevel()}
+								placeholder="Your name"
+								class="focus:ring-green-500 w-full rounded-lg bg-white/20 px-4 py-3 text-white placeholder-white/50 backdrop-blur-sm focus:bg-white/30 focus:outline-none focus:ring-2"
+								on:keydown={(e) => e.key === 'Enter' && playerName && startStoryLevel()}
+								autofocus
 							/>
+							<p class="mt-2 text-sm text-yellow-300">
+								Guest players need to enter a name to track progress
+							</p>
 						</div>
 					{/if}
 
 					<button
 						on:click={startStoryLevel}
-						disabled={loading || (isGuest && !playerName)}
-						class="w-full rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 py-4 text-2xl font-bold text-white transition-all hover:scale-105 disabled:opacity-50"
+						disabled={loading}
+						class="from-green-600 w-full rounded-xl bg-gradient-to-r to-emerald-600 py-4 text-2xl font-bold text-white transition-all hover:scale-105 disabled:opacity-50"
 						style="font-family: 'Jersey 10', sans-serif;"
 					>
-						{loading ? 'LOADING...' : 'START LEVEL'}
+						{loading ? 'LOADING...' : isGuest && !playerName ? 'ENTER NAME ABOVE' : 'START LEVEL'}
 					</button>
 
 					<button

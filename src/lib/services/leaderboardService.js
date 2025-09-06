@@ -23,8 +23,8 @@ export const leaderboardService = {
 
 			console.log('[LeaderboardService] API Response:', result);
 
-			// The API returns data in the 'leaderboard' property
-			const leaderboardData = result.leaderboard || [];
+			// Correctly access the leaderboard array inside result.data
+			const leaderboardData = result.data?.leaderboard || [];
 
 			console.log('[LeaderboardService] Leaderboard entries:', {
 				type: type,

@@ -12,10 +12,10 @@ export async function GET({ url }) {
 		let leaderboardData = [];
 
 		if (type === 'freeplay') {
-			// Get completed freeplay sessions
+			// Get completed freeplay sessions - INCLUDE TIME_UP STATUS!
 			const whereClause = {
 				gameMode: 'FREEPLAY',
-				status: { in: ['COMPLETED', 'TIME_UP'] },
+				status: { in: ['COMPLETED', 'TIME_UP'] }, // Include TIME_UP sessions
 				score: { not: null }
 			};
 
@@ -49,7 +49,11 @@ export async function GET({ url }) {
 				difficulty: session.difficulty,
 				accuracy:
 					session.totalSteps > 0
-						? Math.round((session.puzzlesCompleted / session.totalSteps) * 100)
+						? Math.round(
+								((session.puzzlesCompleted - session.roundsUsed) /
+									Math.max(session.puzzlesCompleted, 1)) *
+									100
+							)
 						: 0,
 				completedAt: session.endTime || session.createdAt,
 				isRegistered: !!session.userId
@@ -68,7 +72,7 @@ export async function GET({ url }) {
 				success: true,
 				type: 'freeplay',
 				difficulty: difficulty,
-				leaderboard: leaderboardData,
+				leaderboard: leaderboardData, // Return as array directly
 				stats: {
 					totalGames: stats._count || 0,
 					averageScore: Math.round(stats._avg?.score || 0),
@@ -182,7 +186,7 @@ export async function GET({ url }) {
 			return json({
 				success: true,
 				type: 'story',
-				leaderboard: leaderboardData,
+				leaderboard: leaderboardData, // Return as array directly
 				stats: {
 					totalPlayers: allPlayers.length,
 					averageLevelsCompleted:
@@ -246,7 +250,7 @@ export async function POST({ request }) {
 			);
 		}
 
-		// Only process completed sessions
+		// Only process completed sessions (including TIME_UP)
 		if (gameSession.status !== 'COMPLETED' && gameSession.status !== 'TIME_UP') {
 			return json(
 				{
@@ -265,7 +269,7 @@ export async function POST({ request }) {
 			success: true,
 			message: 'Score submitted successfully',
 			score: gameSession.score,
-			rank: null // Could calculate rank here if needed
+			rank: null 
 		});
 	} catch (error) {
 		console.error('Score submission error:', error);

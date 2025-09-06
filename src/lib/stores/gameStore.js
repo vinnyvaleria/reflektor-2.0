@@ -87,8 +87,8 @@ export const storyProgress = writable({
 
 // leaderboard state - only store top 10 for each mode
 export const leaderboardState = writable({
-	freeplay: {}, // { "1" : {displayName: Name, score: 500} }
-	story: {}, // { "1" : {displayName: Name, averageTime: 25, levelsUnlocked: 5} }
+	freeplay: [], // [ "1" : {displayName: Name, score: 500} ]
+	story: [], // [ "1" : {displayName: Name, averageTime: 25, levelsUnlocked: 5} ]
 	loading: false,
 	lastUpdated: null
 });
