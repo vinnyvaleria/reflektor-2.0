@@ -10,8 +10,8 @@ export class MapGenerator {
 
 		const obstacleRanges = {
 			EASY: [0.25, 0.35], // 25-35%
-			MEDIUM: [0.3, 0.4], // 30-40%
-			HARD: [0.35, 0.45] // 35-45%
+			MEDIUM: [0.4, 0.45], // 30-40%
+			HARD: [0.45, 0.55] // 35-45%
 		};
 		const [min, max] = obstacleRanges[difficulty];
 

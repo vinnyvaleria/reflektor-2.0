@@ -29,7 +29,7 @@ function initObstacleVisibility(mainMap, mirroredMap) {
 				mirrorCell === 1 || (typeof mirrorCell === 'object' && mirrorCell?.type === 1);
 
 			if (mainIsObstacle && mirrorIsObstacle) {
-				const hideMain = Math.random() < 0.5;
+				const hideMain = Math.random() < 0.3;
 				visibility[`${row}-${col}-main`] = !hideMain;
 				visibility[`${row}-${col}-mirror`] = hideMain;
 			} else {
