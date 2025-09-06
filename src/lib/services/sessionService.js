@@ -46,10 +46,20 @@ function initObstacleVisibility(mainMap, mirroredMap) {
 const sessionApi = {
 	async startFreeplay(difficulty, playerName = null) {
 		const userId = getCurrentUserId();
+		const $userState = get(userState);
+
+		// Use the logged-in user's displayName or username if available
+		let finalPlayerName = playerName;
+		if (!finalPlayerName && $userState.isLoggedIn) {
+			finalPlayerName = $userState.user?.displayName || $userState.user?.username || 'Player';
+		} else if (!finalPlayerName) {
+			finalPlayerName = 'Guest';
+		}
+
 		const body = {
 			difficulty,
 			timeLimit: 180,
-			playerName: playerName || 'Guest', // Default to 'Guest' if null
+			playerName: finalPlayerName,
 			userId
 		};
 		return await apiPost('/api/freeplay/start', body, 'Failed to start freeplay');
@@ -57,9 +67,19 @@ const sessionApi = {
 
 	async startStory(level, playerName = null, resumeSession = false) {
 		const userId = getCurrentUserId();
+		const $userState = get(userState);
+
+		// Use the logged-in user's displayName or username if available
+		let finalPlayerName = playerName;
+		if (!finalPlayerName && $userState.isLoggedIn) {
+			finalPlayerName = $userState.user?.displayName || $userState.user?.username || 'Player';
+		} else if (!finalPlayerName) {
+			finalPlayerName = 'Guest';
+		}
+
 		const body = {
 			level,
-			playerName: playerName || 'Guest',
+			playerName: finalPlayerName,
 			userId,
 			resumeSession
 		};
@@ -86,7 +106,11 @@ export const sessionService = {
 		try {
 			const $userState = get(userState);
 
-			const result = await sessionApi.startFreeplay(difficulty, playerName);
+			// Don't pass playerName if user is logged in (let the API handle it)
+			const result = await sessionApi.startFreeplay(
+				difficulty,
+				$userState.isLoggedIn ? null : playerName
+			);
 
 			gameState.set({
 				currentSession: result.data.gameSession,
@@ -124,7 +148,12 @@ export const sessionService = {
 				throw new Error('Create an account to access levels beyond 3');
 			}
 
-			const result = await sessionApi.startStory(level, playerName, resumeSession);
+			// Don't pass playerName if user is logged in (let the API handle it)
+			const result = await sessionApi.startStory(
+				level,
+				$userState.isLoggedIn ? null : playerName,
+				resumeSession
+			);
 
 			gameState.set({
 				currentSession: result.data.gameSession,
