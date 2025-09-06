@@ -2,7 +2,7 @@
 
 **Reflektor** is a full-stack pixel-style puzzle game inspired by mirror mechanics. Built with SvelteKit, Prisma, and modern web technologies, players control a character navigating a main grid while a mirrored NPC follows on an inverted grid. The objective is to reach the goal without hitting obstacles on either side.
 
-![Reflektor Gameplay](./static/game-screenshot.png)
+![Reflektor Gameplay](/src//lib/assets/images/game-image.png)
 
 ## 🎯 Project Overview
 
