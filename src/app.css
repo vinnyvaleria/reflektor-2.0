@@ -1,3 +1,175 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@font-face {
+	font-family: 'Jersey 10';
+	src: url('/src/lib/assets/fonts/Jersey10-Regular.ttf') format('truetype');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'Jersey 15';
+	src: url('/src/lib/assets/fonts/Jersey15-Regular.ttf') format('truetype');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'Pixelify Sans';
+	src: url('/src/lib/assets/fonts/PixelifySans-VariableFont_wght.ttf') format('truetype');
+	font-weight: 700;
+	font-style: normal;
+	font-display: swap;
+}
+
+/* base styles */
+@layer base {
+	html {
+		font-family: 'jersey 10', system-ui, sans-serif;
+	}
+
+	body {
+		@apply bg-slate-50 text-slate-900;
+		font-family: 'jersey 10', system-ui, sans-serif;
+	}
+
+	/* ensure consistent font rendering */
+	* {
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	}
+}
+
+/* custom component styles */
+@layer components {
+	/* game button base style */
+	.btn-game {
+		@apply rounded-lg px-6 py-3 font-bold shadow-game transition-all duration-200;
+		font-family: 'jersey 10', sans-serif;
+		text-transform: lowercase;
+	}
+
+	/* primary game button */
+	.btn-primary {
+		@apply btn-game transform bg-game-primary text-white hover:scale-105 hover:bg-game-secondary hover:shadow-game-lg;
+	}
+
+	/* secondary game button */
+	.btn-secondary {
+		@apply btn-game border-2 border-game-primary bg-white text-game-primary hover:bg-game-primary hover:text-white;
+	}
+
+	/* game grid cell base */
+	.grid-cell {
+		@apply flex items-center justify-center border-2 border-game-blue text-xl font-bold transition-all duration-200;
+		font-family: 'jersey 10', sans-serif;
+		aspect-ratio: 1;
+	}
+
+	/* game card style */
+	.game-card {
+		@apply rounded-lg border-2 border-gray-200 bg-white p-6 shadow-game;
+	}
+
+	/* input field styling */
+	.input-game {
+		@apply w-full rounded-lg border-2 border-gray-300 p-3 transition-colors focus:border-game-primary focus:outline-none;
+		font-family: 'jersey 10', sans-serif;
+	}
+
+	/* header text styling */
+	.header-pixel {
+		font-family: 'pixelify sans', monospace;
+		font-weight: 700;
+	}
+
+	/* body text styling */
+	.text-game {
+		font-family: 'jersey 10', sans-serif;
+	}
+
+	/* code/monospace text */
+	.text-mono {
+		font-family: 'source code pro', monospace;
+	}
+}
+
+/* utility classes */
+@layer utilities {
+	/* disable text selection for game elements */
+	.select-none-important {
+		-webkit-user-select: none !important;
+		-moz-user-select: none !important;
+		-ms-user-select: none !important;
+		user-select: none !important;
+	}
+
+	/* game-specific gradients */
+	.bg-gradient-game {
+		background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+	}
+
+	.bg-gradient-success {
+		background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+	}
+
+	/* glassmorphism effect for modern ui */
+	.glass {
+		backdrop-filter: blur(10px);
+		background: rgba(255, 255, 255, 0.1);
+		border: 1px solid rgba(255, 255, 255, 0.2);
+	}
+
+	/* accessibility improvements */
+	.focus-visible {
+		@apply focus:outline-none focus:ring-2 focus:ring-game-primary focus:ring-offset-2;
+	}
+}
+
+/* game-specific animations */
+@keyframes gameShake {
+	0%,
+	100% {
+		transform: translateX(0);
+	}
+	25% {
+		transform: translateX(-2px);
+	}
+	75% {
+		transform: translateX(2px);
+	}
+}
+
+@keyframes gameGlow {
+	0%,
+	100% {
+		box-shadow: 0 0 5px rgba(79, 70, 229, 0.5);
+	}
+	50% {
+		box-shadow: 0 0 20px rgba(79, 70, 229, 0.8);
+	}
+}
+
+/* utility animation classes */
+.animate-shake {
+	animation: gameShake 0.3s ease-in-out;
+}
+
+/*  Home */
+.main-game-background {
+	background-image:
+		linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)),
+		url('/src/lib/assets/images/light-bg.jpg');
+	background-size: cover;
+	background-color: var(--light);
+	overflow: hidden;
+}
+
+/* Game Grid customisation */
+.custom-border-outset {
+	border-style: outset;
+}

@@ -1,12 +1,24 @@
-<script lang="ts">
+<script>
 	import '../app.css';
-	import favicon from '$lib/assets/favicon.svg';
+	import { gameService } from '$lib/services/gameService.js';
+	import { onMount } from 'svelte';
 
-	let { children } = $props();
+	// initialize game services when app starts
+	onMount(async () => {
+		try {
+			await gameService.initialize();
+		} catch (error) {
+			console.error('Failed to initialize game services:', error);
+		}
+	});
 </script>
 
 <svelte:head>
-	<link rel="icon" href={favicon} />
+	<title>Reflektor 2.0 - Mirror Puzzle Game</title>
+	<meta
+		name="description"
+		content="Navigate two mirrored grids simultaneously in this challenging puzzle game"
+	/>
 </svelte:head>
 
-{@render children?.()}
+<slot />
