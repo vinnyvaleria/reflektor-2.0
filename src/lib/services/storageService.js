@@ -25,7 +25,7 @@ export const storageService = {
 			localStorage.setItem(STORAGE_KEYS.GAME_STATE, JSON.stringify(gameData));
 			return true;
 		} catch (error) {
-			console.warn('Failed to save game state:', error);
+			// console.warn('Failed to save game state:', error);
 			return false;
 		}
 	},
@@ -51,14 +51,14 @@ export const storageService = {
 
 			// version check for future compatibility
 			if (parsed.version !== '2.0') {
-				console.warn('Game data version mismatch, clearing storage');
+				// console.warn('Game data version mismatch, clearing storage');
 				this.clearGameState();
 				return null;
 			}
 
 			return parsed;
 		} catch (error) {
-			console.warn('Failed to load game state:', error);
+			// console.warn('Failed to load game state:', error);
 			this.clearGameState();
 			return null;
 		}
@@ -70,7 +70,7 @@ export const storageService = {
 		try {
 			localStorage.removeItem(STORAGE_KEYS.GAME_STATE);
 		} catch (error) {
-			console.warn('Failed to clear game state:', error);
+			// console.warn('Failed to clear game state:', error);
 		}
 	},
 
@@ -87,7 +87,7 @@ export const storageService = {
 			localStorage.setItem(STORAGE_KEYS.STORY_PROGRESS, JSON.stringify(storyData));
 			return true;
 		} catch (error) {
-			console.warn('Failed to save story progress:', error);
+			// console.warn('Failed to save story progress:', error);
 			return false;
 		}
 	},
@@ -109,7 +109,7 @@ export const storageService = {
 
 			return parsed;
 		} catch (error) {
-			console.warn('Failed to load story progress:', error);
+			// console.warn('Failed to load story progress:', error);
 			this.clearStoryProgress();
 			return null;
 		}
@@ -121,7 +121,7 @@ export const storageService = {
 		try {
 			localStorage.removeItem(STORAGE_KEYS.STORY_PROGRESS);
 		} catch (error) {
-			console.warn('Failed to clear story progress:', error);
+			// console.warn('Failed to clear story progress:', error);
 		}
 	},
 
@@ -132,7 +132,7 @@ export const storageService = {
 			localStorage.setItem(STORAGE_KEYS.USER_TOKEN, token);
 			return true;
 		} catch (error) {
-			console.warn('Failed to save user token:', error);
+			// console.warn('Failed to save user token:', error);
 			return false;
 		}
 	},
@@ -143,7 +143,7 @@ export const storageService = {
 		try {
 			return localStorage.getItem(STORAGE_KEYS.USER_TOKEN);
 		} catch (error) {
-			console.warn('Failed to get user token:', error);
+			// console.warn('Failed to get user token:', error);
 			return null;
 		}
 	},
@@ -154,7 +154,7 @@ export const storageService = {
 		try {
 			localStorage.removeItem(STORAGE_KEYS.USER_TOKEN);
 		} catch (error) {
-			console.warn('Failed to clear user token:', error);
+			// console.warn('Failed to clear user token:', error);
 		}
 	},
 
@@ -171,7 +171,7 @@ export const storageService = {
 			);
 			return true;
 		} catch (error) {
-			console.warn('Failed to save settings:', error);
+			// console.warn('Failed to save settings:', error);
 			return false;
 		}
 	},
@@ -183,7 +183,7 @@ export const storageService = {
 			const saved = localStorage.getItem(STORAGE_KEYS.SETTINGS);
 			return saved ? JSON.parse(saved) : null;
 		} catch (error) {
-			console.warn('Failed to load settings:', error);
+			// console.warn('Failed to load settings:', error);
 			return null;
 		}
 	},
@@ -196,7 +196,7 @@ export const storageService = {
 			try {
 				localStorage.removeItem(key);
 			} catch (error) {
-				console.warn(`Failed to clear ${key}:`, error);
+				// console.warn(`Failed to clear ${key}:`, error);
 			}
 		});
 	},
@@ -220,7 +220,7 @@ export const storageService = {
 
 			return info;
 		} catch (error) {
-			console.warn('Failed to get storage info:', error);
+			// console.warn('Failed to get storage info:', error);
 			return null;
 		}
 	},

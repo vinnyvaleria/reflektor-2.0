@@ -110,7 +110,7 @@ export async function POST({ request }) {
 			user: newUser
 		});
 	} catch (error) {
-		console.error('Signup error:', error);
+		// console.error('Signup error:', error);
 
 		// handle Prisma constraint errors
 		if (error.code === 'P2002') {
@@ -153,7 +153,7 @@ export async function GET({ url }) {
 			username: username
 		});
 	} catch (error) {
-		console.error('Username check error:', error);
+		// console.error('Username check error:', error);
 		return json({ error: 'Failed to check username' }, { status: 500 });
 	}
 }

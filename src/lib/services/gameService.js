@@ -38,7 +38,7 @@ export const gameService = {
 			await authService.initializeAuth();
 			await leaderboardService.loadLeaderboard('freeplay');
 		} catch (error) {
-			console.error('Game service initialization failed:', error);
+			// console.error('Game service initialization failed:', error);
 		}
 	}
 };

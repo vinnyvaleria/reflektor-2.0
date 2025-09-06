@@ -17,7 +17,7 @@
 				gameService.setSelectedHelper(newSelection);
 				onHelperSelect(newSelection);
 			} catch (error) {
-				console.warn('Helper selection failed:', error.message);
+				// console.warn('Helper selection failed:', error.message);
 			}
 		}
 	}

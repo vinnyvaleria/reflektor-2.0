@@ -165,7 +165,7 @@ export async function POST({ request }) {
 				: null
 		});
 	} catch (error) {
-		console.error('Story start error:', error);
+		// console.error('Story start error:', error);
 
 		// handle specific error types
 		if (error.message.includes('not found')) {
@@ -242,7 +242,7 @@ export async function GET({ url }) {
 				: null
 		});
 	} catch (error) {
-		console.error('Get story progress error:', error);
+		// console.error('Get story progress error:', error);
 		return json({ error: 'Failed to retrieve story progress' }, { status: 500 });
 	}
 }

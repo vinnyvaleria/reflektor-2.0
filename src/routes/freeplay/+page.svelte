@@ -15,7 +15,7 @@
 		GameInfo
 	} from '$lib';
 
-	import StoreTest from '$lib/components/game/StoreTest.svelte';
+	// import StoreTest from '$lib/components/game/StoreTest.svelte';
 
 	// Local UI state
 	let loading = false;
@@ -55,7 +55,7 @@
 	async function handleMove(direction) {
 		// Check if move is allowed
 		if (!currentSession || status !== 'PLAYING') {
-			console.log('Cannot move - game status:', status);
+			// console.log('Cannot move - game status:', status);
 			return;
 		}
 
@@ -64,17 +64,17 @@
 
 			if (result.success) {
 				if (result.data.nextPuzzle) {
-					console.log(
+					// console.log(
 						`Puzzle completed! Total solved: ${result.data.gameSession.puzzlesCompleted}`
 					);
 					showSuccess('Puzzle completed! Moving to next puzzle...');
 				}
 			} else if (result.collision) {
-				console.log(`Hit obstacle! Rounds used: ${result.data?.gameSession?.roundsUsed}`);
+				// console.log(`Hit obstacle! Rounds used: ${result.data?.gameSession?.roundsUsed}`);
 				showError('Cannot move there - obstacle in the way!');
 			}
 		} catch (err) {
-			console.error('Move failed:', err.message);
+			// console.error('Move failed:', err.message);
 			showError('Move failed: ' + err.message);
 		}
 	}
@@ -83,7 +83,7 @@
 	async function handleCellClick(row, col, gridType) {
 		// Check if interaction is allowed
 		if (status !== 'PLAYING') {
-			console.log('Cannot interact - game status:', status);
+			// console.log('Cannot interact - game status:', status);
 			return;
 		}
 
@@ -108,7 +108,7 @@
 					obstacleCell // Pass obstacle cell for frontend validation
 				);
 
-				console.log(
+				// console.log(
 					`✅ ${result.helperUsed} used successfully on ${gridType} grid at (${row}, ${col})`
 				);
 
@@ -118,7 +118,7 @@
 					`${helperConfig.emoji} ${result.helperUsed} removed ${gridType} ${obstacleCell.obstacle}!`
 				);
 			} catch (error) {
-				console.error('Helper tool usage failed:', error);
+				// console.error('Helper tool usage failed:', error);
 				showError(error.message || 'Helper tool usage failed');
 			}
 			return;
@@ -158,25 +158,25 @@
 		try {
 			await handleMove(direction);
 		} catch (err) {
-			console.error('Move failed:', err);
+			// console.error('Move failed:', err);
 		}
 	}
 
 	// Helper functions for user feedback
 	function showError(message) {
-		console.error(message);
+		// console.error(message);
 		feedbackMessage = { type: 'error', text: message, timestamp: Date.now() };
 	}
 
 	function showSuccess(message) {
-		console.log(message);
+		// console.log(message);
 		feedbackMessage = { type: 'success', text: message, timestamp: Date.now() };
 	}
 
 	// Helper selection function
 	function handleHelperSelect(helperType) {
 		if (status !== 'PLAYING') {
-			console.log('Cannot select helper - game not active');
+			// console.log('Cannot select helper - game not active');
 			return;
 		}
 		helperService.selectHelper(helperType);
@@ -236,7 +236,7 @@
 			timer = null;
 		}
 		if (status === 'TIME_UP') {
-			console.log('Time up! Game Over.');
+			// console.log('Time up! Game Over.');
 			showError("Time's up! Game Over!");
 		}
 	}
@@ -255,7 +255,7 @@
 	}
 </script>
 
-<StoreTest />
+<!-- <StoreTest /> -->
 
 <div class="main-game-background min-h-screen">
 	<div class="container mx-auto px-4 py-8">

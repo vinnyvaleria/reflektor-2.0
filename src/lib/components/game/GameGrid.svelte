@@ -22,7 +22,7 @@
 
 	// Debug log to verify updates
 	$: if (currentPosition) {
-		console.log('[GameGrid] Position changed:', currentPosition);
+		// console.log('[GameGrid] Position changed:', currentPosition);
 	}
 
 	function checkGoalReached() {

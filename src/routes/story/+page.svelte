@@ -73,7 +73,7 @@
 	async function handleMove(direction) {
 		// Check if move is allowed
 		if (!currentSession || status !== 'PLAYING') {
-			console.log('Cannot move - game status:', status);
+			// console.log('Cannot move - game status:', status);
 			return;
 		}
 
@@ -98,7 +98,7 @@
 				showError(`Hit obstacle! Rounds: ${result.data?.gameSession?.roundsUsed}`);
 			}
 		} catch (err) {
-			console.error('Move failed:', err.message);
+			// console.error('Move failed:', err.message);
 			showError('Move failed: ' + err.message);
 		}
 	}
@@ -107,7 +107,7 @@
 	async function handleCellClick(row, col, gridType) {
 		// Check if interaction is allowed
 		if (status !== 'PLAYING') {
-			console.log('Cannot interact - game status:', status);
+			// console.log('Cannot interact - game status:', status);
 			return;
 		}
 
@@ -129,14 +129,14 @@
 					obstacleCell
 				);
 
-				console.log(
+				// console.log(
 					`✅ ${result.helperUsed} used successfully on ${gridType} grid at (${row}, ${col})`
 				);
 
 				const helperConfig = helperService.getHelperConfig(result.helperUsed);
 				showSuccess(`${helperConfig.emoji} ${result.helperUsed} removed ${gridType} obstacle!`);
 			} catch (error) {
-				console.error('Helper tool usage failed:', error);
+				// console.error('Helper tool usage failed:', error);
 				showError(error.message || 'Helper tool usage failed');
 			}
 			return;
@@ -172,18 +172,18 @@
 
 	// Helper functions
 	function showError(message) {
-		console.error(message);
+		// console.error(message);
 		feedbackMessage = { type: 'error', text: message, timestamp: Date.now() };
 	}
 
 	function showSuccess(message) {
-		console.log(message);
+		// console.log(message);
 		feedbackMessage = { type: 'success', text: message, timestamp: Date.now() };
 	}
 
 	function handleHelperSelect(helperType) {
 		if (status !== 'PLAYING') {
-			console.log('Cannot select helper - game not active');
+			// console.log('Cannot select helper - game not active');
 			return;
 		}
 		helperService.selectHelper(helperType);

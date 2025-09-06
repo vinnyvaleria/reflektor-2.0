@@ -44,7 +44,7 @@ export async function withLoadingState(store, asyncOperation, options = {}) {
 		if (onError) {
 			onError(error, store);
 		} else {
-			console.error('Async operation failed:', error);
+			// console.error('Async operation failed:', error);
 		}
 
 		throw error;

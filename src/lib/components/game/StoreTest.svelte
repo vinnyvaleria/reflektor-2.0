@@ -7,14 +7,14 @@
 	$: stateData = $gameState;
 
 	onMount(() => {
-		console.log('[StoreTest] Component mounted');
-		console.log('[StoreTest] Initial state:', $gameState);
+		// console.log('[StoreTest] Component mounted');
+		// console.log('[StoreTest] Initial state:', $gameState);
 	});
 
 	// Log whenever state changes
 	$: {
 		if (stateData) {
-			console.log('[StoreTest] State updated:', {
+			// console.log('[StoreTest] State updated:', {
 				hasMapData: !!stateData.mapData,
 				mapDataLength: stateData.mapData?.length,
 				hasMirroredData: !!stateData.mirroredMapData,

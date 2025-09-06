@@ -81,7 +81,7 @@ export async function GET({ url }) {
 			recentSessions: recentSessions
 		});
 	} catch (error) {
-		console.error('Get progress error:', error);
+		// console.error('Get progress error:', error);
 		return json(
 			{
 				error: 'Failed to get user progress',
@@ -168,7 +168,7 @@ export async function POST({ request }) {
 			user: updatedUser
 		});
 	} catch (error) {
-		console.error('Update progress error:', error);
+		// console.error('Update progress error:', error);
 		return json(
 			{
 				error: 'Failed to update progress',
@@ -235,7 +235,7 @@ export async function DELETE({ request }) {
 			user: resetUser
 		});
 	} catch (error) {
-		console.error('Reset progress error:', error);
+		// console.error('Reset progress error:', error);
 		return json(
 			{
 				error: 'Failed to reset progress',
@@ -332,7 +332,7 @@ export async function PUT({ request }) {
 			levelsUpdated: completedLevels.length
 		});
 	} catch (error) {
-		console.error('Sync progress error:', error);
+		// console.error('Sync progress error:', error);
 		return json(
 			{
 				error: 'Failed to sync progress',

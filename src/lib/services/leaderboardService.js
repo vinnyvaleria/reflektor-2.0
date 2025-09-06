@@ -1,92 +1,98 @@
 // src/lib/services/leaderboardService.js
-// Consolidated leaderboard service with API calls
 
 import { get } from 'svelte/store';
-import { leaderboardState, userState, gameState, withLoadingState, apiPost, apiGet } from '$lib';
+import { leaderboardState, apiGet, apiPost } from '$lib';
 
-// API Functions
 const leaderboardApi = {
-	async getLeaderboard(type = 'freeplay', difficulty = null, limit = 50) {
-		const params = { type, limit: limit.toString() };
-		if (difficulty) params.difficulty = difficulty;
-
-		return await apiGet('/api/leaderboard', params, 'Failed to get leaderboard');
+	async fetchLeaderboard(type = 'freeplay') {
+		const endpoint = `/api/leaderboard?type=${type}`;
+		return await apiGet(endpoint, {}, 'Failed to load leaderboard');
 	},
 
 	async submitScore(gameSessionId) {
-		const $userState = get(userState);
-		const body = { 
-			gameSessionId,
-			userId: $userState.user?.id || null 
-		};
-
-		return await apiPost('/api/leaderboard', body, 'Failed to submit score');
+		return await apiPost('/api/leaderboard', { gameSessionId }, 'Failed to submit score');
 	}
 };
 
-// Service Functions
 export const leaderboardService = {
-	async loadLeaderboard(type = 'freeplay', difficulty = null) {
-		return withLoadingState(leaderboardState, async () => {
-			const result = await leaderboardApi.getLeaderboard(type, difficulty);
+	async loadLeaderboard(type = 'freeplay') {
+		try {
+			// console.log('[LeaderboardService] Loading leaderboard:', type);
 
-			if (result.success) {
+			const result = await leaderboardApi.fetchLeaderboard(type);
+
+			// console.log('[LeaderboardService] API Response:', result);
+
+			// The API returns data in the 'leaderboard' property
+			const leaderboardData = result.leaderboard || [];
+
+			// console.log('[LeaderboardService] Leaderboard entries:', {
+				type: type,
+				count: leaderboardData.length,
+				data: leaderboardData
+			});
+
+			// Update the store based on type
+			if (type === 'freeplay') {
 				leaderboardState.update((state) => ({
 					...state,
-					[type]: result.data.leaderboard,
-					lastUpdated: new Date()
+					freeplay: leaderboardData,
+					lastUpdated: new Date().toISOString()
 				}));
-
-				const $userState = get(userState);
-				if ($userState.user) {
-					const userRank =
-						result.data.leaderboard.findIndex(
-							(entry) =>
-								entry.playerName === ($userState.user.displayName || $userState.user.username)
-						) + 1;
-					leaderboardState.update((state) => ({
-						...state,
-						userRank: userRank || null
-					}));
-				}
+			} else if (type === 'story') {
+				leaderboardState.update((state) => ({
+					...state,
+					story: leaderboardData,
+					lastUpdated: new Date().toISOString()
+				}));
 			}
 
-			return result.data;
-		});
-	},
+			// Verify the update
+			const currentState = get(leaderboardState);
+			// console.log('[LeaderboardService] Store updated:', {
+				freeplayCount: currentState.freeplay.length,
+				storyCount: currentState.story.length,
+				lastUpdated: currentState.lastUpdated
+			});
 
-	async submitScore(gameSessionId) {
-		try {
-			const result = await leaderboardApi.submitScore(gameSessionId);
-			const $gameState = get(gameState);
-
-			// Reload leaderboard after submission
-			if ($gameState.gameMode === 'FREEPLAY') {
-				await this.loadLeaderboard('freeplay', $gameState.currentSession?.difficulty);
-			} else {
-				await this.loadLeaderboard('story');
-			}
-
-			return result;
+			return leaderboardData;
 		} catch (error) {
-			console.error('Failed to submit to leaderboard:', error);
+			// console.error('[LeaderboardService] Load failed:', error);
 			throw error;
 		}
 	},
 
-	async getUserRank(type = 'freeplay', playerName) {
-		const $leaderboardState = get(leaderboardState);
-		const leaderboard = $leaderboardState[type] || [];
-		
-		const rank = leaderboard.findIndex(entry => entry.playerName === playerName) + 1;
-		return rank || null;
+	async submitScore(gameSessionId) {
+		try {
+			if (!gameSessionId) {
+				// console.warn('[LeaderboardService] No session ID provided for score submission');
+				return;
+			}
+
+			// console.log('[LeaderboardService] Submitting score for session:', gameSessionId);
+
+			const result = await leaderboardApi.submitScore(gameSessionId);
+
+			// console.log('[LeaderboardService] Submit response:', result);
+
+			// Reload leaderboard after submission
+			// Determine which type to reload based on current game mode
+			const gameState = await import('$lib').then((m) => get(m.gameState));
+			const leaderboardType = gameState.gameMode === 'STORY' ? 'story' : 'freeplay';
+
+			await this.loadLeaderboard(leaderboardType);
+
+			return result;
+		} catch (error) {
+			// console.error('[LeaderboardService] Submit failed:', error);
+			// Don't throw - score submission failure shouldn't break the game
+		}
 	},
 
 	clearLeaderboard() {
 		leaderboardState.set({
-			freeplay: {},
-			story: {},
-			loading: false,
+			freeplay: [],
+			story: [],
 			lastUpdated: null
 		});
 	}

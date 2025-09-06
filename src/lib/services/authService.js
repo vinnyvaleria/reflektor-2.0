@@ -73,7 +73,7 @@ export const authService = {
 		});
 
 		clearGameStorage();
-		
+
 		if (browser) {
 			localStorage.removeItem('reflektor_user_token');
 		}
@@ -105,7 +105,7 @@ export const authService = {
 			},
 			{
 				onError: (error) => {
-					console.error('Auth initialization failed:', error);
+					// console.error('Auth initialization failed:', error);
 					localStorage.removeItem('reflektor_user_token');
 				}
 			}
@@ -116,7 +116,7 @@ export const authService = {
 		try {
 			return await authApi.checkUsername(username);
 		} catch (error) {
-			console.error('Username check failed:', error);
+			// console.error('Username check failed:', error);
 			return false;
 		}
 	},

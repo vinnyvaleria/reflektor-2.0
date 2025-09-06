@@ -35,7 +35,7 @@
 			await leaderboardService.loadLeaderboard(type);
 		} catch (err) {
 			error = `Failed to load ${type} leaderboard`;
-			console.error(err);
+			// console.error(err);
 		} finally {
 			loading = false;
 		}
