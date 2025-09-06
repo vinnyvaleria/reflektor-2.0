@@ -59,11 +59,11 @@ export const sessionService = {
 				throw new Error('Player name is required for guest players');
 			}
 
-			// console.log('[SessionService] Starting freeplay:', { difficulty, playerName });
+			console.log('[SessionService] Starting freeplay:', { difficulty, playerName });
 
 			const result = await sessionApi.startFreeplay(difficulty, playerName);
 
-			// console.log('[SessionService] API Response received:', {
+			console.log('[SessionService] API Response received:', {
 				success: result.success,
 				hasGameSession: !!result.data?.gameSession,
 				hasMapData: !!result.data?.mapData
@@ -77,7 +77,7 @@ export const sessionService = {
 			const { gameSession, mapData } = result.data;
 
 			if (!gameSession || !mapData) {
-				// console.error('[SessionService] Missing data:', {
+				console.error('[SessionService] Missing data:', {
 					gameSession: !!gameSession,
 					mapData: !!mapData
 				});
@@ -86,7 +86,7 @@ export const sessionService = {
 
 			// Extract the arrays from mapData object
 			if (!mapData.mainMap || !mapData.mirroredMap) {
-				// console.error('[SessionService] Missing map arrays:', {
+				console.error('[SessionService] Missing map arrays:', {
 					mainMap: !!mapData.mainMap,
 					mirroredMap: !!mapData.mirroredMap
 				});
@@ -118,7 +118,7 @@ export const sessionService = {
 				completionStats: null
 			};
 
-			// console.log('[SessionService] Setting game state:', {
+			console.log('[SessionService] Setting game state:', {
 				mapDataLength: newState.mapData?.length,
 				mirroredDataLength: newState.mirroredMapData?.length,
 				position: newState.currentPosition,
@@ -130,7 +130,7 @@ export const sessionService = {
 
 			// Verify it was set
 			const verifyState = get(gameState);
-			// console.log('[SessionService] State verification:', {
+			console.log('[SessionService] State verification:', {
 				hasMapData: !!verifyState.mapData,
 				hasMirroredData: !!verifyState.mirroredMapData,
 				position: verifyState.currentPosition
@@ -144,10 +144,10 @@ export const sessionService = {
 				timerService.start(gameSession.timeLimit);
 			}
 
-			// console.log('[SessionService] Freeplay started successfully');
+			console.log('[SessionService] Freeplay started successfully');
 			return result.data;
 		} catch (error) {
-			// console.error('[SessionService] Start freeplay failed:', error);
+			console.error('[SessionService] Start freeplay failed:', error);
 			throw error;
 		}
 	},
@@ -164,7 +164,7 @@ export const sessionService = {
 				throw new Error('Player name is required for guest players');
 			}
 
-			// console.log('[SessionService] Starting story level:', { level, playerName });
+			console.log('[SessionService] Starting story level:', { level, playerName });
 
 			const result = await sessionApi.startStory(level, playerName, resumeSession);
 
@@ -209,7 +209,7 @@ export const sessionService = {
 				completionStats: null
 			};
 
-			// console.log('[SessionService] Setting game state:', {
+			console.log('[SessionService] Setting game state:', {
 				mapDataLength: newState.mapData?.length,
 				mirroredDataLength: newState.mirroredMapData?.length,
 				position: newState.currentPosition,
@@ -222,10 +222,10 @@ export const sessionService = {
 			// Reset helpers
 			this.resetHelpers();
 
-			// console.log('[SessionService] Story started successfully');
+			console.log('[SessionService] Story started successfully');
 			return result.data;
 		} catch (error) {
-			// console.error('[SessionService] Start story failed:', error);
+			console.error('[SessionService] Start story failed:', error);
 			throw error;
 		}
 	},
@@ -237,7 +237,7 @@ export const sessionService = {
 			if (result.success && result.data.gameSession) {
 				const session = result.data.gameSession;
 
-				// console.log('[SessionService] Resuming session:', session);
+				console.log('[SessionService] Resuming session:', session);
 
 				// Extract maps from currentPuzzle
 				const currentPuzzle = session.currentPuzzle || {};
@@ -263,7 +263,7 @@ export const sessionService = {
 
 			return false;
 		} catch (error) {
-			// console.error('[SessionService] Resume session failed:', error);
+			console.error('[SessionService] Resume session failed:', error);
 			return false;
 		}
 	},
@@ -283,7 +283,7 @@ export const sessionService = {
 	},
 
 	resetHelpers() {
-		// console.log('[SessionService] Resetting helpers');
+		console.log('[SessionService] Resetting helpers');
 		helpers.set({
 			hammer: { available: 1, used: 0, obstacle: 'wall' },
 			axe: { available: 1, used: 0, obstacle: 'tree' },
@@ -304,7 +304,7 @@ export const sessionService = {
 
 			return [1];
 		} catch (error) {
-			// console.error('[SessionService] Failed to get available levels:', error);
+			console.error('[SessionService] Failed to get available levels:', error);
 			return [1];
 		}
 	}

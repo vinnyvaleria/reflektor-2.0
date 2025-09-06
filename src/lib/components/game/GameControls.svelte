@@ -35,7 +35,7 @@
 			try {
 				gameService.setSelectedHelper(helper);
 			} catch (error) {
-				// console.warn('Helper not available:', error.message);
+				console.warn('Helper not available:', error.message);
 			}
 		}
 	}

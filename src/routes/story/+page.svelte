@@ -1,3 +1,4 @@
+<!-- src/routes/story/+page.svelte -->
 <script>
 	import { onMount, onDestroy } from 'svelte';
 	import { goto } from '$app/navigation';
@@ -7,10 +8,11 @@
 		gameState,
 		helpers,
 		helperService,
-		gameService,
+		sessionService,
 		userState,
 		storyProgress,
 		progressService,
+		gameplayService,
 		GameGrid,
 		GameControls,
 		HelperTools,
@@ -19,6 +21,7 @@
 
 	// Get level from URL params
 	let selectedLevel = 1;
+	let previousLevel = null;
 	let loading = false;
 	let error = null;
 	let gameStarted = false;
@@ -39,12 +42,22 @@
 	$: progress = $storyProgress;
 	$: isGuest = !currentUser?.isLoggedIn;
 
-	// Get level from URL
-	$: if ($page.url.searchParams.has('level')) {
-		selectedLevel = parseInt($page.url.searchParams.get('level'));
+	// Watch for URL level changes
+	$: {
+		const urlLevel = $page.url.searchParams.has('level')
+			? parseInt($page.url.searchParams.get('level'))
+			: 1;
+
+		if (urlLevel !== previousLevel) {
+			previousLevel = urlLevel;
+			selectedLevel = urlLevel;
+
+			// Reset everything when level changes
+			resetForNewLevel();
+		}
 	}
 
-	// Watch for game completion
+	// Watch for game completion from gameState
 	$: if (status === 'COMPLETED' && !showCompletion && currentSession) {
 		showCompletion = true;
 		if ($gameState.completionStats) {
@@ -52,18 +65,65 @@
 		}
 	}
 
-	// Start story level
-	async function startStoryLevel() {
-		loading = true;
-		error = null;
+	// Reset state for new level
+	function resetForNewLevel() {
 		showCompletion = false;
 		completionStats = null;
+		gameStarted = false;
+		error = null;
+		feedbackMessage = null;
+
+		// Clear game state
+		gameState.update((state) => ({
+			...state,
+			status: 'IDLE',
+			currentSession: null,
+			mapData: null,
+			mirroredMapData: null,
+			currentPosition: null,
+			selectedHelper: null,
+			completionStats: null
+		}));
+
+		// Reset helpers
+		helpers.set({
+			hammer: { available: 1, used: 0, obstacle: 'wall' },
+			axe: { available: 1, used: 0, obstacle: 'tree' },
+			sickle: { available: 1, used: 0, obstacle: 'grass' }
+		});
+
+		// Auto-start if appropriate
+		if (!loading && selectedLevel) {
+			startStoryLevel();
+		}
+	}
+
+	// Start story level
+	async function startStoryLevel() {
+		if (loading || gameStarted) return;
+
+		loading = true;
+		error = null;
 
 		try {
-			await gameService.startStory(selectedLevel, playerName || null);
+			console.log(`Starting story level ${selectedLevel}`);
+
+			// For guests, require player name
+			if (isGuest && !playerName) {
+				error = 'Please enter your name';
+				loading = false;
+				return;
+			}
+
+			// Use sessionService to start story
+			await sessionService.startStory(selectedLevel, playerName || null, false);
+
 			gameStarted = true;
+			error = null;
 		} catch (err) {
-			error = err.message;
+			console.error('Failed to start story level:', err);
+			error = err.message || 'Failed to start level';
+			gameStarted = false;
 		} finally {
 			loading = false;
 		}
@@ -73,16 +133,18 @@
 	async function handleMove(direction) {
 		// Check if move is allowed
 		if (!currentSession || status !== 'PLAYING') {
-			// console.log('Cannot move - game status:', status);
+			console.log('Cannot move - game status:', status);
 			return;
 		}
 
 		try {
-			const result = await gameService.makeMove(direction);
+			const result = await gameplayService.makeMove(direction);
 
-			if (result.success && result.data.storyCompleted) {
+			if (result.success && result.data?.storyCompleted) {
+				console.log('Level completed!', result.data.stats);
 				showCompletion = true;
 				completionStats = result.data.stats;
+				gameStarted = false;
 
 				// Update progress
 				if (currentUser?.isLoggedIn) {
@@ -95,30 +157,34 @@
 			}
 
 			if (!result.success && result.collision) {
-				showError(`Hit obstacle! Rounds: ${result.data?.gameSession?.roundsUsed}`);
+				showError(`Hit obstacle! Rounds: ${result.data?.gameSession?.roundsUsed || 0}`);
 			}
 		} catch (err) {
-			// console.error('Move failed:', err.message);
+			console.error('Move failed:', err);
 			showError('Move failed: ' + err.message);
 		}
 	}
 
 	// Handle cell click
-	async function handleCellClick(row, col, gridType) {
+	async function handleCellClick(event) {
+		const { row, col, gridType } = event.detail || event;
+
 		// Check if interaction is allowed
 		if (status !== 'PLAYING') {
-			// console.log('Cannot interact - game status:', status);
+			console.log('Cannot interact - game status:', status);
 			return;
 		}
 
 		const currentPos = currentPosition;
+		if (!currentPos) return;
+
 		const currentMapData = gridType === 'main' ? mapData : mirroredMapData;
+		if (!currentMapData) return;
+
 		const cellValue = currentMapData[row][col];
 
 		// Case 1: Helper tool selected - try to remove obstacle
 		if (selectedHelper) {
-			const obstacleCell = currentMapData[row][col];
-
 			try {
 				const result = await helperService.useHelper(
 					currentSession?.id,
@@ -126,17 +192,13 @@
 					row,
 					col,
 					gridType,
-					obstacleCell
-				);
-
-				// console.log(
-					`✅ ${result.helperUsed} used successfully on ${gridType} grid at (${row}, ${col})`
+					cellValue
 				);
 
 				const helperConfig = helperService.getHelperConfig(result.helperUsed);
 				showSuccess(`${helperConfig.emoji} ${result.helperUsed} removed ${gridType} obstacle!`);
 			} catch (error) {
-				// console.error('Helper tool usage failed:', error);
+				console.error('Helper tool usage failed:', error);
 				showError(error.message || 'Helper tool usage failed');
 			}
 			return;
@@ -144,18 +206,17 @@
 
 		// Case 2: No helper selected - try to move to clicked cell
 		if (cellValue !== 0 && cellValue !== 3) {
-			showError('Cannot move to that position!');
-			return;
+			return; // Can't move to non-empty cells
 		}
 
 		// Calculate if clicked cell is adjacent
 		const rowDiff = row - currentPos.row;
 		const colDiff = gridType === 'main' ? col - currentPos.col : col - currentPos.mirroredCol;
+
 		const isAdjacent = Math.abs(rowDiff) + Math.abs(colDiff) === 1;
 
 		if (!isAdjacent) {
-			showError('Can only move to adjacent cells!');
-			return;
+			return; // Can only move to adjacent cells
 		}
 
 		// Determine direction
@@ -172,21 +233,26 @@
 
 	// Helper functions
 	function showError(message) {
-		// console.error(message);
+		console.error(message);
 		feedbackMessage = { type: 'error', text: message, timestamp: Date.now() };
 	}
 
 	function showSuccess(message) {
-		// console.log(message);
+		console.log(message);
 		feedbackMessage = { type: 'success', text: message, timestamp: Date.now() };
 	}
 
-	function handleHelperSelect(helperType) {
+	function handleHelperSelect(helper) {
 		if (status !== 'PLAYING') {
-			// console.log('Cannot select helper - game not active');
+			console.log('Cannot select helper - game not active');
 			return;
 		}
-		helperService.selectHelper(helperType);
+
+		try {
+			gameplayService.setSelectedHelper(helper);
+		} catch (err) {
+			showError(err.message);
+		}
 	}
 
 	// Star rating calculation
@@ -203,21 +269,16 @@
 
 	// Navigation functions
 	function replayLevel() {
-		showCompletion = false;
-		completionStats = null;
-		gameStarted = false;
-		gameService.resetGame();
-		startStoryLevel();
+		console.log('Replaying level', selectedLevel);
+		resetForNewLevel();
 	}
 
 	function playNextLevel() {
 		if (selectedLevel < 30) {
-			goto(`/story?level=${selectedLevel + 1}`);
-			selectedLevel++;
-			showCompletion = false;
-			completionStats = null;
-			gameStarted = false;
-			gameService.resetGame();
+			const nextLevel = selectedLevel + 1;
+			console.log('Going to next level:', nextLevel);
+			// Navigate to next level URL
+			goto(`/story?level=${nextLevel}`);
 		}
 	}
 
@@ -236,10 +297,10 @@
 			else if (event.key === 'ArrowLeft') handleMove('left');
 			else if (event.key === 'ArrowRight') handleMove('right');
 			// Helper keys
-			else if (event.key === '1' || event.key === 'h') helperService.selectHelper('hammer');
-			else if (event.key === '2' || event.key === 'a') helperService.selectHelper('axe');
-			else if (event.key === '3' || event.key === 's') helperService.selectHelper('sickle');
-			else if (event.key === 'Escape') helperService.selectHelper(null);
+			else if (event.key === '1' || event.key === 'h') gameplayService.setSelectedHelper('hammer');
+			else if (event.key === '2' || event.key === 'a') gameplayService.setSelectedHelper('axe');
+			else if (event.key === '3' || event.key === 's') gameplayService.setSelectedHelper('sickle');
+			else if (event.key === 'Escape') gameplayService.setSelectedHelper(null);
 		};
 
 		document.addEventListener('keydown', handleKeydown);
@@ -308,14 +369,14 @@
 					<!-- Stats -->
 					<div class="mb-8 grid grid-cols-2 gap-4">
 						<div class="rounded-lg bg-white/10 p-4">
-							<div class="text-3xl font-bold text-blue-400">{completionStats.steps}</div>
+							<div class="text-3xl font-bold text-blue-400">{completionStats.steps || 0}</div>
 							<div class="text-white/70">Steps Taken</div>
-							<div class="text-sm text-gray-400">Target: {completionStats.targetSteps}</div>
+							<div class="text-sm text-gray-400">Target: {completionStats.targetSteps || '?'}</div>
 						</div>
 						<div class="rounded-lg bg-white/10 p-4">
-							<div class="text-3xl font-bold text-green-400">{completionStats.timeTaken}s</div>
+							<div class="text-3xl font-bold text-green-400">{completionStats.timeTaken || 0}s</div>
 							<div class="text-white/70">Time Taken</div>
-							<div class="text-sm text-gray-400">Target: {completionStats.targetTime}s</div>
+							<div class="text-sm text-gray-400">Target: {completionStats.targetTime || '?'}s</div>
 						</div>
 					</div>
 
@@ -323,7 +384,7 @@
 					<div class="flex gap-4">
 						<button
 							on:click={replayLevel}
-							class="flex-1 rounded-xl bg-yellow-600 py-3 text-xl font-bold text-white hover:bg-yellow-500"
+							class="flex-1 rounded-xl bg-yellow-600 py-3 text-xl font-bold text-white transition-all hover:bg-yellow-500"
 							style="font-family: 'Jersey 10', sans-serif;"
 						>
 							REPLAY
@@ -332,15 +393,15 @@
 						{#if selectedLevel < 30}
 							<button
 								on:click={playNextLevel}
-								class="flex-1 rounded-xl bg-green-600 py-3 text-xl font-bold text-white hover:bg-green-500"
+								class="flex-1 rounded-xl bg-green-600 py-3 text-xl font-bold text-white transition-all hover:bg-green-500"
 								style="font-family: 'Jersey 10', sans-serif;"
 							>
-								NEXT LEVEL
+								NEXT LEVEL →
 							</button>
 						{:else}
 							<button
 								on:click={goToLevelSelect}
-								class="flex-1 rounded-xl bg-purple-600 py-3 text-xl font-bold text-white hover:bg-purple-500"
+								class="flex-1 rounded-xl bg-purple-600 py-3 text-xl font-bold text-white transition-all hover:bg-purple-500"
 								style="font-family: 'Jersey 10', sans-serif;"
 							>
 								LEVEL SELECT
@@ -350,7 +411,7 @@
 
 					<button
 						on:click={() => goto('/')}
-						class="mt-4 w-full rounded-xl bg-gray-700 py-3 text-xl font-bold text-white hover:bg-gray-600"
+						class="mt-4 w-full rounded-xl bg-gray-700 py-3 text-xl font-bold text-white transition-all hover:bg-gray-600"
 						style="font-family: 'Jersey 10', sans-serif;"
 					>
 						MAIN MENU
@@ -359,23 +420,31 @@
 			</div>
 		{:else if loading}
 			<div class="flex h-96 items-center justify-center">
-				<div class="animate-pulse text-3xl text-white">Loading level...</div>
+				<div class="animate-pulse text-3xl text-white">Loading level {selectedLevel}...</div>
 			</div>
 		{:else if error}
 			<div class="mx-auto max-w-md">
 				<div class="rounded-xl bg-red-600/20 p-6 backdrop-blur-sm">
 					<h3 class="mb-2 text-2xl font-bold text-red-400">Error</h3>
 					<p class="mb-4 text-white">{error}</p>
-					<button
-						on:click={() => goto('/levels')}
-						class="w-full rounded-lg bg-red-600 py-3 font-bold text-white hover:bg-red-700"
-					>
-						Back to Level Select
-					</button>
+					<div class="flex gap-4">
+						<button
+							on:click={startStoryLevel}
+							class="flex-1 rounded-lg bg-red-600 py-3 font-bold text-white hover:bg-red-700"
+						>
+							Retry
+						</button>
+						<button
+							on:click={() => goto('/levels')}
+							class="flex-1 rounded-lg bg-gray-600 py-3 font-bold text-white hover:bg-gray-700"
+						>
+							Back to Levels
+						</button>
+					</div>
 				</div>
 			</div>
 		{:else if !gameStarted}
-			<!-- Start Level Screen -->
+			<!-- Start Level Screen (for guests needing name) -->
 			<div class="mx-auto max-w-md">
 				<div class="rounded-xl bg-white/10 p-8 backdrop-blur-sm">
 					<h2
@@ -385,19 +454,6 @@
 						LEVEL {selectedLevel}
 					</h2>
 
-					{#if currentSession?.currentPuzzle?.metadata}
-						<div class="mb-6 space-y-3">
-							<div class="flex justify-between text-white">
-								<span>Target Steps:</span>
-								<span class="font-bold">{currentSession.currentPuzzle.metadata.targetSteps}</span>
-							</div>
-							<div class="flex justify-between text-white">
-								<span>Target Time:</span>
-								<span class="font-bold">{currentSession.currentPuzzle.metadata.targetTime}s</span>
-							</div>
-						</div>
-					{/if}
-
 					{#if isGuest && !playerName}
 						<div class="mb-6">
 							<label class="mb-2 block text-lg text-white">Your Name:</label>
@@ -406,6 +462,7 @@
 								bind:value={playerName}
 								placeholder="Enter your name"
 								class="w-full rounded-lg bg-white/20 px-4 py-3 text-white placeholder-white/50 backdrop-blur-sm"
+								on:keydown={(e) => e.key === 'Enter' && startStoryLevel()}
 							/>
 						</div>
 					{/if}
@@ -433,12 +490,7 @@
 			<div class="space-y-6">
 				<!-- Game Info -->
 				{#if currentSession}
-					<GameInfo
-						level={selectedLevel}
-						steps={currentSession.totalSteps || 0}
-						targetSteps={currentSession.currentPuzzle?.metadata?.targetSteps}
-						roundsUsed={currentSession.roundsUsed || 0}
-					/>
+					<GameInfo />
 				{/if}
 
 				<!-- Helper Tools -->

@@ -140,7 +140,7 @@ export async function POST({ request }) {
 			}
 		});
 	} catch (error) {
-		// console.error('Helper API error:', error);
+		console.error('Helper API error:', error);
 		return json(
 			{
 				error: 'Internal server error during helper usage'

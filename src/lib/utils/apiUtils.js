@@ -20,7 +20,7 @@ export async function apiCall(url, options = {}, errorMessage = 'API call failed
 			throw new Error(data.error || errorMessage);
 		}
 	} catch (error) {
-		// console.error(`API Error for ${url}:`, error);
+		console.error(`API Error for ${url}:`, error);
 		throw error;
 	}
 }

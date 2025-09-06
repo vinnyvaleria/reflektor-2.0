@@ -8,7 +8,7 @@
 		try {
 			await gameService.initialize();
 		} catch (error) {
-			// console.error('Failed to initialize game services:', error);
+			console.error('Failed to initialize game services:', error);
 		}
 	});
 </script>

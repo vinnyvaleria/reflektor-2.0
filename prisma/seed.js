@@ -7,7 +7,7 @@ import { STORY_MAPS } from '../src/lib/data/storyMaps.js';
 const prisma = new PrismaClient();
 
 async function main() {
-	// console.log('Seeding story maps...');
+	console.log('Seeding story maps...');
 
 	// insert all story maps into database
 	// our goal is to have 30 story mode maps
@@ -19,12 +19,12 @@ async function main() {
 		});
 	}
 
-	// console.log(`Seeded ${STORY_MAPS.length} story maps!`);
+	console.log(`Seeded ${STORY_MAPS.length} story maps!`);
 }
 
 main()
 	.catch((e) => {
-		// console.error(e);
+		console.error(e);
 		process.exit(1);
 	})
 	.finally(async () => {

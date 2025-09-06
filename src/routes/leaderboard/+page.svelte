@@ -1,3 +1,4 @@
+<!-- src/routes/leaderboard/+page.svelte -->
 <script>
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
@@ -12,20 +13,54 @@
 	$: storyEntries = formatStoryLeaderboard(leaderboard.story);
 
 	function formatFreeplayLeaderboard(data) {
-		if (!data || typeof data !== 'object') return [];
-		return Object.values(data)
-			.sort((a, b) => b.score - a.score)
+		console.log('[Leaderboard] Formatting freeplay data:', data);
+
+		// Handle array format directly since API returns array
+		if (!Array.isArray(data)) {
+			console.log('[Leaderboard] Data is not an array, returning empty');
+			return [];
+		}
+
+		// Data is already an array from the API, just ensure proper formatting
+		return data
+			.filter((entry) => entry && entry.score !== null && entry.score !== undefined)
+			.sort((a, b) => (b.score || 0) - (a.score || 0))
 			.slice(0, 50)
-			.map((entry, index) => ({ ...entry, rank: index + 1 }));
+			.map((entry, index) => ({
+				...entry,
+				rank: entry.rank || index + 1, // Use provided rank or calculate
+				playerName: entry.playerName || 'Anonymous',
+				score: entry.score || 0,
+				puzzlesCompleted: entry.puzzlesCompleted || 0,
+				accuracy: entry.accuracy || 0,
+				difficulty: entry.difficulty || 'EASY',
+				completedAt: entry.completedAt || entry.createdAt
+			}));
 	}
 
 	function formatStoryLeaderboard(data) {
-		if (!data || typeof data !== 'object') return [];
-		return Object.values(data)
-			.filter((entry) => entry.levelsCompleted >= 5)
-			.sort((a, b) => a.averageTime - b.averageTime)
+		console.log('[Leaderboard] Formatting story data:', data);
+
+		// Handle array format directly
+		if (!Array.isArray(data)) {
+			console.log('[Leaderboard] Data is not an array, returning empty');
+			return [];
+		}
+
+		return data
+			.filter((entry) => entry && entry.levelsCompleted >= 5)
+			.sort((a, b) => (a.averageTime || Infinity) - (b.averageTime || Infinity))
 			.slice(0, 50)
-			.map((entry, index) => ({ ...entry, rank: index + 1 }));
+			.map((entry, index) => ({
+				...entry,
+				rank: entry.rank || index + 1,
+				playerName: entry.playerName || 'Anonymous',
+				averageTime: entry.averageTime || 0,
+				levelsCompleted: entry.levelsCompleted || 0,
+				totalStars: entry.totalStars || 0,
+				completionRate: entry.completionRate || 0,
+				highestLevel: entry.highestLevel || 1
+			}));
 	}
 
 	async function loadLeaderboard(type) {
@@ -35,7 +70,7 @@
 			await leaderboardService.loadLeaderboard(type);
 		} catch (err) {
 			error = `Failed to load ${type} leaderboard`;
-			// console.error(err);
+			console.error(err);
 		} finally {
 			loading = false;
 		}
@@ -47,15 +82,45 @@
 	}
 
 	function formatTime(seconds) {
-		if (!seconds) return '0:00';
+		if (!seconds && seconds !== 0) return '0:00';
 		const mins = Math.floor(seconds / 60);
-		const secs = seconds % 60;
+		const secs = Math.floor(seconds % 60);
 		return `${mins}:${secs.toString().padStart(2, '0')}`;
 	}
 
 	function formatDate(dateString) {
 		if (!dateString) return 'N/A';
-		return new Date(dateString).toLocaleDateString();
+		try {
+			return new Date(dateString).toLocaleDateString();
+		} catch {
+			return 'N/A';
+		}
+	}
+
+	function getDifficultyColor(difficulty) {
+		switch (difficulty) {
+			case 'EASY':
+				return 'bg-green-600';
+			case 'MEDIUM':
+				return 'bg-yellow-600';
+			case 'HARD':
+				return 'bg-red-600';
+			default:
+				return 'bg-gray-600';
+		}
+	}
+
+	function getRankDisplay(rank) {
+		switch (rank) {
+			case 1:
+				return { icon: '🥇', class: 'bg-yellow-500/20' };
+			case 2:
+				return { icon: '🥈', class: 'bg-gray-400/20' };
+			case 3:
+				return { icon: '🥉', class: 'bg-orange-600/20' };
+			default:
+				return { icon: `#${rank}`, class: '' };
+		}
 	}
 
 	onMount(() => {
@@ -68,7 +133,7 @@
 </svelte:head>
 
 <div class="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-900 to-blue-900 p-8">
-	<div class="mx-auto" style="max-width: 1400px; min-width: 1200px;">
+	<div class="mx-auto" style="max-width: 1400px;">
 		<!-- Header -->
 		<div class="mb-8 flex items-center justify-between">
 			<button
@@ -95,8 +160,8 @@
 				on:click={() => switchTab('freeplay')}
 				class={`min-w-[200px] rounded-xl px-8 py-4 font-['Jersey_10'] text-2xl font-bold uppercase transition-all ${
 					activeTab === 'freeplay'
-						? 'bg-blue-600 text-white'
-						: 'bg-white/10 text-white/70 backdrop-blur-sm'
+						? 'bg-blue-600 text-white shadow-lg'
+						: 'bg-white/10 text-white/70 backdrop-blur-sm hover:bg-white/20'
 				}`}
 			>
 				🎲 FREEPLAY
@@ -106,8 +171,8 @@
 				on:click={() => switchTab('story')}
 				class={`min-w-[200px] rounded-xl px-8 py-4 font-['Jersey_10'] text-2xl font-bold uppercase transition-all ${
 					activeTab === 'story'
-						? 'bg-green-600 text-white'
-						: 'bg-white/10 text-white/70 backdrop-blur-sm'
+						? 'bg-green-600 text-white shadow-lg'
+						: 'bg-white/10 text-white/70 backdrop-blur-sm hover:bg-white/20'
 				}`}
 			>
 				📖 STORY MODE
@@ -117,145 +182,162 @@
 		<!-- Leaderboard Content -->
 		<div class="rounded-2xl border border-white/20 bg-black/40 p-8 backdrop-blur-md">
 			{#if loading}
-				<div class="py-20 text-center text-3xl text-white">Loading leaderboard...</div>
+				<div class="py-20 text-center">
+					<div class="animate-pulse text-3xl text-white">Loading leaderboard...</div>
+				</div>
 			{:else if error}
 				<div class="py-20 text-center">
-					<div class="text-2xl text-red-400">{error}</div>
+					<div class="mb-4 text-2xl text-red-400">{error}</div>
 					<button
 						on:click={() => loadLeaderboard(activeTab)}
-						class="mt-4 rounded-lg bg-red-600 px-6 py-3 text-white hover:bg-red-500"
+						class="rounded-lg bg-red-600 px-6 py-3 text-white transition-colors hover:bg-red-500"
 					>
 						Retry
 					</button>
 				</div>
 			{:else if activeTab === 'freeplay'}
 				<!-- Freeplay Leaderboard -->
-				<div class="overflow-x-auto">
-					<table class="w-full text-white">
-						<thead>
-							<tr class="border-b border-white/20 text-left">
-								<th class="p-4 font-['Jersey_10'] text-xl">RANK</th>
-								<th class="p-4 font-['Jersey_10'] text-xl">PLAYER</th>
-								<th class="p-4 font-['Jersey_10'] text-xl">SCORE</th>
-								<th class="p-4 font-['Jersey_10'] text-xl">PUZZLES</th>
-								<th class="p-4 font-['Jersey_10'] text-xl">ACCURACY</th>
-								<th class="p-4 font-['Jersey_10'] text-xl">DIFFICULTY</th>
-								<th class="p-4 font-['Jersey_10'] text-xl">DATE</th>
-							</tr>
-						</thead>
-						<tbody>
-							{#each freeplayEntries as entry}
-								<tr
-									class={`border-b border-white/10 transition-colors hover:bg-white/5 ${
-										entry.rank === 1
-											? 'bg-yellow-500/20'
-											: entry.rank === 2
-												? 'bg-gray-400/20'
-												: entry.rank === 3
-													? 'bg-orange-600/20'
-													: ''
-									}`}
-								>
-									<td class="flex items-center gap-2 p-4">
-										{#if entry.rank === 1}🥇{:else if entry.rank === 2}🥈{:else if entry.rank === 3}🥉{:else}#{entry.rank}{/if}
-									</td>
-									<td class="p-4">
-										<div class="text-[18px] font-bold">{entry.playerName || 'Anonymous'}</div>
-										{#if entry.isRegistered}<div class="text-xs text-green-400">
-												✓ Registered
-											</div>{/if}
-									</td>
-									<td class="p-4 text-2xl font-bold text-yellow-400">{entry.score || 0}</td>
-									<td class="p-4 text-center text-lg">{entry.puzzlesCompleted || 0}</td>
-									<td class="p-4 text-center text-lg">{entry.accuracy || 0}%</td>
-									<td class="p-4">
-										<span
-											class={`rounded-lg px-3 py-1 text-sm font-bold ${
-												entry.difficulty === 'EASY'
-													? 'bg-green-600'
-													: entry.difficulty === 'MEDIUM'
-														? 'bg-yellow-600'
-														: 'bg-red-600'
-											}`}
-										>
-											{entry.difficulty || 'EASY'}
-										</span>
-									</td>
-									<td class="p-4 text-sm text-gray-400">{formatDate(entry.completedAt)}</td>
+				{#if freeplayEntries.length > 0}
+					<div class="overflow-x-auto">
+						<table class="w-full text-white">
+							<thead>
+								<tr class="border-b-2 border-white/30">
+									<th class="p-4 text-left font-['Jersey_10'] text-xl uppercase">Rank</th>
+									<th class="p-4 text-left font-['Jersey_10'] text-xl uppercase">Player</th>
+									<th class="p-4 text-center font-['Jersey_10'] text-xl uppercase">Score</th>
+									<th class="p-4 text-center font-['Jersey_10'] text-xl uppercase">Puzzles</th>
+									<th class="p-4 text-center font-['Jersey_10'] text-xl uppercase">Accuracy</th>
+									<th class="p-4 text-center font-['Jersey_10'] text-xl uppercase">Difficulty</th>
+									<th class="p-4 text-center font-['Jersey_10'] text-xl uppercase">Date</th>
 								</tr>
-							{/each}
-						</tbody>
-					</table>
-					{#if freeplayEntries.length === 0}
-						<div class="py-20 text-center text-2xl text-gray-400">
-							No scores yet. Be the first to play!
-						</div>
-					{/if}
-				</div>
+							</thead>
+							<tbody>
+								{#each freeplayEntries as entry}
+									{@const rankInfo = getRankDisplay(entry.rank)}
+									<tr
+										class={`border-b border-white/10 transition-all hover:bg-white/5 ${rankInfo.class}`}
+									>
+										<td class="p-4">
+											<span class="text-lg font-bold">{rankInfo.icon}</span>
+										</td>
+										<td class="p-4">
+											<div class="flex flex-col">
+												<span class="text-lg font-bold">{entry.playerName}</span>
+												{#if entry.isRegistered}
+													<span class="text-xs text-green-400">✓ Registered</span>
+												{/if}
+											</div>
+										</td>
+										<td class="p-4 text-center">
+											<span class="text-2xl font-bold text-yellow-400"
+												>{entry.score.toLocaleString()}</span
+											>
+										</td>
+										<td class="p-4 text-center text-lg">{entry.puzzlesCompleted}</td>
+										<td class="p-4 text-center text-lg">{entry.accuracy}%</td>
+										<td class="p-4 text-center">
+											<span
+												class={`inline-block rounded-lg px-3 py-1 text-sm font-bold text-white ${getDifficultyColor(entry.difficulty)}`}
+											>
+												{entry.difficulty}
+											</span>
+										</td>
+										<td class="p-4 text-center text-sm text-gray-400"
+											>{formatDate(entry.completedAt)}</td
+										>
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					</div>
+				{:else}
+					<div class="py-20 text-center">
+						<div class="mb-4 text-2xl text-gray-400">No scores yet. Be the first to play!</div>
+						<button
+							on:click={() => goto('/freeplay')}
+							class="rounded-lg bg-blue-600 px-6 py-3 text-white transition-colors hover:bg-blue-500"
+						>
+							Play Now
+						</button>
+					</div>
+				{/if}
 			{:else}
 				<!-- Story Mode Leaderboard -->
-				<div class="mb-4 rounded-lg bg-yellow-600/20 p-4">
+				<div class="mb-6 rounded-lg bg-yellow-600/20 p-4">
 					<p class="text-center text-yellow-200">
 						⚠️ Only showing players who have completed 5 or more levels
 					</p>
 				</div>
-				<div class="overflow-x-auto">
-					<table class="w-full text-white">
-						<thead>
-							<tr class="border-b border-white/20 text-left">
-								<th class="p-4 font-['Jersey_10'] text-xl">RANK</th>
-								<th class="p-4 font-['Jersey_10'] text-xl">PLAYER</th>
-								<th class="p-4 font-['Jersey_10'] text-xl">AVG TIME</th>
-								<th class="p-4 font-['Jersey_10'] text-xl">LEVELS</th>
-								<th class="p-4 font-['Jersey_10'] text-xl">STARS</th>
-								<th class="p-4 font-['Jersey_10'] text-xl">COMPLETION</th>
-								<th class="p-4 font-['Jersey_10'] text-xl">HIGHEST</th>
-							</tr>
-						</thead>
-						<tbody>
-							{#each storyEntries as entry}
-								<tr
-									class={`border-b border-white/10 transition-colors hover:bg-white/5 ${
-										entry.rank === 1
-											? 'bg-yellow-500/20'
-											: entry.rank === 2
-												? 'bg-gray-400/20'
-												: entry.rank === 3
-													? 'bg-orange-600/20'
-													: ''
-									}`}
-								>
-									<td class="flex items-center gap-2 p-4">
-										{#if entry.rank === 1}🥇{:else if entry.rank === 2}🥈{:else if entry.rank === 3}🥉{:else}#{entry.rank}{/if}
-									</td>
-									<td class="p-4"
-										><div class="text-[18px] font-bold">{entry.playerName || 'Anonymous'}</div></td
-									>
-									<td class="p-4 text-2xl font-bold text-green-400"
-										>{formatTime(entry.averageTime)}</td
-									>
-									<td class="p-4 text-center text-lg font-bold">{entry.levelsCompleted || 0}/30</td>
-									<td class="p-4 text-center text-xl">⭐ {entry.totalStars || 0}</td>
-									<td class="p-4">
-										<div class="h-4 w-full rounded-full bg-gray-700">
-											<div
-												class="h-full rounded-full bg-gradient-to-r from-green-500 to-green-600"
-												style="width: {entry.completionRate || 0}%"
-											></div>
-										</div>
-										<div class="mt-1 text-center text-sm">{entry.completionRate || 0}%</div>
-									</td>
-									<td class="p-4 text-center text-lg font-bold">LVL {entry.highestLevel || 1}</td>
+
+				{#if storyEntries.length > 0}
+					<div class="overflow-x-auto">
+						<table class="w-full text-white">
+							<thead>
+								<tr class="border-b-2 border-white/30">
+									<th class="p-4 text-left font-['Jersey_10'] text-xl uppercase">Rank</th>
+									<th class="p-4 text-left font-['Jersey_10'] text-xl uppercase">Player</th>
+									<th class="p-4 text-center font-['Jersey_10'] text-xl uppercase">Avg Time</th>
+									<th class="p-4 text-center font-['Jersey_10'] text-xl uppercase">Levels</th>
+									<th class="p-4 text-center font-['Jersey_10'] text-xl uppercase">Stars</th>
+									<th class="p-4 text-center font-['Jersey_10'] text-xl uppercase">Progress</th>
+									<th class="p-4 text-center font-['Jersey_10'] text-xl uppercase">Highest</th>
 								</tr>
-							{/each}
-						</tbody>
-					</table>
-					{#if storyEntries.length === 0}
-						<div class="py-20 text-center text-2xl text-gray-400">
+							</thead>
+							<tbody>
+								{#each storyEntries as entry}
+									{@const rankInfo = getRankDisplay(entry.rank)}
+									<tr
+										class={`border-b border-white/10 transition-all hover:bg-white/5 ${rankInfo.class}`}
+									>
+										<td class="p-4">
+											<span class="text-lg font-bold">{rankInfo.icon}</span>
+										</td>
+										<td class="p-4">
+											<div class="flex flex-col">
+												<span class="text-lg font-bold">{entry.playerName}</span>
+											</div>
+										</td>
+										<td class="p-4 text-center">
+											<span class="text-2xl font-bold text-green-400"
+												>{formatTime(entry.averageTime)}</span
+											>
+										</td>
+										<td class="p-4 text-center text-lg font-bold">{entry.levelsCompleted}/30</td>
+										<td class="p-4 text-center">
+											<span class="text-xl">⭐ {entry.totalStars}</span>
+										</td>
+										<td class="p-4">
+											<div class="flex flex-col items-center gap-1">
+												<div
+													class="h-4 w-full max-w-[100px] overflow-hidden rounded-full bg-gray-700"
+												>
+													<div
+														class="h-full bg-gradient-to-r from-green-500 to-green-600 transition-all"
+														style="width: {entry.completionRate}%"
+													></div>
+												</div>
+												<span class="text-xs">{entry.completionRate}%</span>
+											</div>
+										</td>
+										<td class="p-4 text-center text-lg font-bold">LVL {entry.highestLevel}</td>
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					</div>
+				{:else}
+					<div class="py-20 text-center">
+						<div class="mb-4 text-2xl text-gray-400">
 							No players have completed 5+ levels yet. Keep playing!
 						</div>
-					{/if}
-				</div>
+						<button
+							on:click={() => goto('/story')}
+							class="rounded-lg bg-green-600 px-6 py-3 text-white transition-colors hover:bg-green-500"
+						>
+							Play Story Mode
+						</button>
+					</div>
+				{/if}
 			{/if}
 		</div>
 
@@ -266,21 +348,27 @@
 					<div class="text-3xl font-bold text-white">
 						{activeTab === 'freeplay' ? freeplayEntries.length : storyEntries.length}
 					</div>
-					<div class="font-['Jersey_10'] text-white/70">Total Players</div>
+					<div class="font-['Jersey_10'] text-xl text-white/70">Total Entries</div>
 				</div>
+
 				<div class="rounded-xl bg-white/10 p-6 text-center backdrop-blur-sm">
 					<div class="text-3xl font-bold text-white">
-						{activeTab === 'freeplay'
-							? freeplayEntries[0]?.score || 0
-							: formatTime(storyEntries[0]?.averageTime || 0)}
+						{#if activeTab === 'freeplay'}
+							{freeplayEntries[0]?.score.toLocaleString() || '0'}
+						{:else}
+							{formatTime(storyEntries[0]?.averageTime || 0)}
+						{/if}
 					</div>
-					<div class="font-['Jersey_10'] text-white/70">
+					<div class="font-['Jersey_10'] text-xl text-white/70">
 						{activeTab === 'freeplay' ? 'Top Score' : 'Best Avg Time'}
 					</div>
 				</div>
+
 				<div class="rounded-xl bg-white/10 p-6 text-center backdrop-blur-sm">
-					<div class="text-3xl font-bold text-white">{formatDate(leaderboard.lastUpdated)}</div>
-					<div class="font-['Jersey_10'] text-white/70">Last Updated</div>
+					<div class="text-3xl font-bold text-white">
+						{formatDate(leaderboard.lastUpdated)}
+					</div>
+					<div class="font-['Jersey_10'] text-xl text-white/70">Last Updated</div>
 				</div>
 			</div>
 		{/if}

@@ -204,7 +204,7 @@ export async function GET({ url }) {
 			{ status: 400 }
 		);
 	} catch (error) {
-		// console.error('Leaderboard error:', error);
+		console.error('Leaderboard error:', error);
 		return json(
 			{
 				success: false,
@@ -259,7 +259,7 @@ export async function POST({ request }) {
 
 		// The score is already saved in the gameSession
 		// This endpoint just confirms the submission
-		// console.log(`Score submitted for session ${gameSessionId}: ${gameSession.score}`);
+		console.log(`Score submitted for session ${gameSessionId}: ${gameSession.score}`);
 
 		return json({
 			success: true,
@@ -268,7 +268,7 @@ export async function POST({ request }) {
 			rank: null // Could calculate rank here if needed
 		});
 	} catch (error) {
-		// console.error('Score submission error:', error);
+		console.error('Score submission error:', error);
 		return json(
 			{
 				success: false,

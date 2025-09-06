@@ -112,7 +112,7 @@ export async function POST({ request }) {
 				: null
 		});
 	} catch (error) {
-		// console.error('Freeplay start error:', error);
+		console.error('Freeplay start error:', error);
 
 		// better error responses based on error type
 		if (error.code === 'P2002') {
@@ -174,7 +174,7 @@ export async function GET({ url }) {
 				: null
 		});
 	} catch (error) {
-		// console.error('Get freeplay session error:', error);
+		console.error('Get freeplay session error:', error);
 		return json({ error: 'Failed to retrieve session' }, { status: 500 });
 	}
 }

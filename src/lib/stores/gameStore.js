@@ -307,7 +307,7 @@ export function saveGameToStorage() {
 		);
 		return true;
 	} catch (error) {
-		// console.warn('Failed to save game to storage:', error);
+		console.warn('Failed to save game to storage:', error);
 		return false;
 	}
 }
@@ -334,7 +334,7 @@ export function loadGameFromStorage() {
 
 		return parsed;
 	} catch (error) {
-		// console.warn('Failed to load game from storage:', error);
+		console.warn('Failed to load game from storage:', error);
 		localStorage.removeItem('reflektor_game_state');
 		return null;
 	}
@@ -348,7 +348,7 @@ export function clearGameStorage() {
 		localStorage.removeItem('reflektor_game_state');
 		localStorage.removeItem('reflektor_user_token');
 	} catch (error) {
-		// console.warn('Failed to clear game storage:', error);
+		console.warn('Failed to clear game storage:', error);
 	}
 }
 

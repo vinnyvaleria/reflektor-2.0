@@ -104,7 +104,7 @@ export const helperService = {
 
 			return result.data;
 		} catch (error) {
-			// console.error('Helper service error:', error);
+			console.error('Helper service error:', error);
 			throw error;
 		}
 	},
@@ -112,7 +112,7 @@ export const helperService = {
 	selectHelper(helperType) {
 		// validate helper type if not null
 		if (helperType && !HELPER_CONFIG[helperType]) {
-			// console.warn(`Invalid helper type: ${helperType}`);
+			console.warn(`Invalid helper type: ${helperType}`);
 			return;
 		}
 
@@ -232,7 +232,7 @@ export const helperService = {
 				}
 			})
 			.catch((error) => {
-				// console.error('Failed to load helper state:', error);
+				console.error('Failed to load helper state:', error);
 				this.resetHelpers(); // fallback to reset
 			});
 	},
@@ -247,7 +247,7 @@ export const helperService = {
 
 			return result;
 		} catch (error) {
-			// console.error('Failed to reset helper usage:', error);
+			console.error('Failed to reset helper usage:', error);
 			throw error;
 		}
 	}

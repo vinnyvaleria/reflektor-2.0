@@ -59,7 +59,7 @@ export const progressService = {
 			},
 			{
 				onError: (error) => {
-					// console.error('Failed to load user progress:', error);
+					console.error('Failed to load user progress:', error);
 				}
 			}
 		);
@@ -91,7 +91,7 @@ export const progressService = {
 			},
 			{
 				onError: (error) => {
-					// console.error('Reset progress failed:', error);
+					console.error('Reset progress failed:', error);
 				}
 			}
 		);
@@ -124,7 +124,7 @@ export const progressService = {
 
 			saveGameToStorage();
 		} catch (error) {
-			// console.error('Failed to update guest progress:', error);
+			console.error('Failed to update guest progress:', error);
 		}
 	},
 
@@ -139,7 +139,7 @@ export const progressService = {
 				await this.loadUserProgress(userId);
 			}
 		} catch (error) {
-			// console.error('Failed to sync browser progress:', error);
+			console.error('Failed to sync browser progress:', error);
 		}
 	}
 };

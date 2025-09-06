@@ -94,7 +94,7 @@ export async function POST({ request }) {
 			expiresIn: rememberMe ? '30d' : TOKEN_EXPIRES_IN
 		});
 	} catch (error) {
-		// console.error('Signin error:', error);
+		console.error('Signin error:', error);
 		return json(
 			{
 				error: 'Failed to sign in',
@@ -148,7 +148,7 @@ export async function PUT({ request }) {
 			return json({ error: 'Invalid or expired token' }, { status: 401 });
 		}
 
-		// console.error('Token verification error:', error);
+		console.error('Token verification error:', error);
 		return json({ error: 'Failed to verify token' }, { status: 500 });
 	}
 }

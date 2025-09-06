@@ -295,7 +295,3 @@ export class MapGenerator {
 		return null;
 	}
 }
-
-// console.log(MapGenerator.createEmptyMap(3));
-// console.log(MapGenerator.generate('EASY'));
-// console.log(MapGenerator.generate('MEDIUM'));
