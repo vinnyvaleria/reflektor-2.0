@@ -1,0 +1,3 @@
+load database
+    from sqlite:///prisma/dev.db
+	into postgresql://neondb_owner:endpoint=ep-ancient-lab-a1ow62go-pooler;npg_DNeWbsKyTm30@ep-ancient-lab-a1ow62go-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
