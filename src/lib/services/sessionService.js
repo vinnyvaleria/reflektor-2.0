@@ -5,12 +5,42 @@ import { get } from 'svelte/store';
 import {
 	gameState,
 	helpers,
+	obstacleVisibilityStore,
 	userState,
 	timerService,
 	apiPost,
 	apiGet,
 	getCurrentUserId
 } from '$lib';
+
+// private function to initialise obstacle visibility
+function initObstacleVisibility(mainMap, mirroredMap) {
+	const visibility = {};
+	const gridSize = mainMap.length;
+
+	for (let row = 0; row < gridSize; row++) {
+		for (let col = 0; col < gridSize; col++) {
+			const mainCell = mainMap[row][col];
+			const mirrorCell = mirroredMap[row][col];
+
+			const mainIsObstacle =
+				mainCell === 1 || (typeof mainCell === 'object' && mainCell?.type === 1);
+			const mirrorIsObstacle =
+				mirrorCell === 1 || (typeof mirrorCell === 'object' && mirrorCell?.type === 1);
+
+			if (mainIsObstacle && mirrorIsObstacle) {
+				const hideMain = Math.random() < 0.5;
+				visibility[`${row}-${col}-main`] = !hideMain;
+				visibility[`${row}-${col}-mirror`] = hideMain;
+			} else {
+				visibility[`${row}-${col}-main`] = true;
+				visibility[`${row}-${col}-mirror`] = true;
+			}
+		}
+	}
+
+	obstacleVisibilityStore.set(visibility);
+}
 
 // API Functions
 const sessionApi = {
@@ -29,7 +59,7 @@ const sessionApi = {
 		const userId = getCurrentUserId();
 		const body = {
 			level,
-			playerName: playerName || 'Guest', // Default to 'Guest' if null
+			playerName: playerName || 'Guest',
 			userId,
 			resumeSession
 		};
@@ -56,9 +86,6 @@ export const sessionService = {
 		try {
 			const $userState = get(userState);
 
-			// Remove validation - allow null playerName for guests
-			// Backend will handle 'Guest' as default
-
 			const result = await sessionApi.startFreeplay(difficulty, playerName);
 
 			gameState.set({
@@ -75,6 +102,9 @@ export const sessionService = {
 				gameStartTime: new Date(),
 				completionStats: null
 			});
+
+			// initialize obstacle visibility once per session
+			initObstacleVisibility(result.data.mapData.mainMap, result.data.mapData.mirroredMap);
 
 			this.resetHelpers();
 			timerService.start(result.data.gameSession.timeLimit);
@@ -94,9 +124,6 @@ export const sessionService = {
 				throw new Error('Create an account to access levels beyond 3');
 			}
 
-			// Remove validation - allow null playerName for guests
-			// Backend will handle 'Guest' as default
-
 			const result = await sessionApi.startStory(level, playerName, resumeSession);
 
 			gameState.set({
@@ -115,6 +142,9 @@ export const sessionService = {
 					: new Date(),
 				completionStats: null
 			});
+
+			// Initialize obstacle visibility once per session
+			initObstacleVisibility(result.data.mapData.mainMap, result.data.mapData.mirroredMap);
 
 			this.resetHelpers();
 			return result.data;

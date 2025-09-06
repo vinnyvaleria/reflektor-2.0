@@ -76,6 +76,8 @@ export const helpers = writable({
 	sickle: { available: 1, used: 0, obstacle: 'grass' }
 });
 
+export const obstacleVisibilityStore = writable({});
+
 // story mode progress state
 export const storyProgress = writable({
 	currentLevel: 1,

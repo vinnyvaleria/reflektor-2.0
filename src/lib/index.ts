@@ -20,6 +20,7 @@ export {
 	gameState,
 	userState,
 	helpers,
+	obstacleVisibilityStore,
 	storyProgress,
 	leaderboardState,
 	errorState,
