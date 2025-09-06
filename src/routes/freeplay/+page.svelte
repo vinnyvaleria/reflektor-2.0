@@ -55,7 +55,7 @@
 	async function handleMove(direction) {
 		// Check if move is allowed
 		if (!currentSession || status !== 'PLAYING') {
-			console.log('Cannot move - game status:', status);
+			// console.log('Cannot move - game status:', status);
 			return;
 		}
 
@@ -64,13 +64,13 @@
 
 			if (result.success) {
 				if (result.data.nextPuzzle) {
-					console.log(
-						`Puzzle completed! Total solved: ${result.data.gameSession.puzzlesCompleted}`
-					);
+					// console.log(
+					// 	`Puzzle completed! Total solved: ${result.data.gameSession.puzzlesCompleted}`
+					// );
 					showSuccess('Puzzle completed! Moving to next puzzle...');
 				}
 			} else if (result.collision) {
-				console.log(`Hit obstacle! Rounds used: ${result.data?.gameSession?.roundsUsed}`);
+				// console.log(`Hit obstacle! Rounds used: ${result.data?.gameSession?.roundsUsed}`);
 				showError('Cannot move there - obstacle in the way!');
 			}
 		} catch (err) {
@@ -83,7 +83,7 @@
 	async function handleCellClick(row, col, gridType) {
 		// Check if interaction is allowed
 		if (status !== 'PLAYING') {
-			console.log('Cannot interact - game status:', status);
+			// console.log('Cannot interact - game status:', status);
 			return;
 		}
 
@@ -108,9 +108,9 @@
 					obstacleCell // Pass obstacle cell for frontend validation
 				);
 
-				console.log(
-					`✅ ${result.helperUsed} used successfully on ${gridType} grid at (${row}, ${col})`
-				);
+				// console.log(
+				// 	`✅ ${result.helperUsed} used successfully on ${gridType} grid at (${row}, ${col})`
+				// );
 
 				// Show success feedback
 				const helperConfig = helperService.getHelperConfig(result.helperUsed);
@@ -169,14 +169,14 @@
 	}
 
 	function showSuccess(message) {
-		console.log(message);
+		// console.log(message);
 		feedbackMessage = { type: 'success', text: message, timestamp: Date.now() };
 	}
 
 	// Helper selection function
 	function handleHelperSelect(helperType) {
 		if (status !== 'PLAYING') {
-			console.log('Cannot select helper - game not active');
+			// console.log('Cannot select helper - game not active');
 			return;
 		}
 		helperService.selectHelper(helperType);
@@ -236,7 +236,7 @@
 			timer = null;
 		}
 		if (status === 'TIME_UP') {
-			console.log('Time up! Game Over.');
+			// console.log('Time up! Game Over.');
 			showError("Time's up! Game Over!");
 		}
 	}
@@ -307,7 +307,7 @@
 						<label class="mb-2 block text-lg text-white">Select Difficulty:</label>
 						<select
 							bind:value={selectedDifficulty}
-							class="w-full rounded-lg bg-game-secondary px-4 py-3 text-white backdrop-blur-sm"
+							class="bg-game-secondary w-full rounded-lg px-4 py-3 text-white backdrop-blur-sm"
 						>
 							<option value="EASY">Easy (5x5)</option>
 							<option value="MEDIUM">Medium (7x7)</option>
@@ -332,7 +332,7 @@
 					<button
 						on:click={startGame}
 						disabled={loading || (!currentUser?.isLoggedIn && !playerName)}
-						class="w-full rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 py-4 text-2xl font-bold text-white transition-all hover:scale-105 disabled:opacity-50"
+						class="from-green-600 w-full rounded-xl bg-gradient-to-r to-emerald-600 py-4 text-2xl font-bold text-white transition-all hover:scale-105 disabled:opacity-50"
 						style="font-family: 'Jersey 10', sans-serif;"
 					>
 						{loading ? 'STARTING...' : 'START GAME'}
@@ -395,7 +395,7 @@
 							<div class="space-y-3">
 								<button
 									on:click={resetGame}
-									class="w-full rounded-lg bg-green-600 px-6 py-3 font-bold text-white hover:bg-green-700"
+									class="bg-green-600 hover:bg-green-700 w-full rounded-lg px-6 py-3 font-bold text-white"
 								>
 									PLAY AGAIN
 								</button>

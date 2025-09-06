@@ -105,7 +105,7 @@
 		error = null;
 
 		try {
-			console.log(`Starting story level ${selectedLevel}`);
+			// console.log(`Starting story level ${selectedLevel}`);
 
 			// For guests, require player name
 			if (isGuest && !playerName) {
@@ -132,7 +132,7 @@
 	async function handleMove(direction) {
 		// Check if move is allowed
 		if (!currentSession || status !== 'PLAYING') {
-			console.log('Cannot move - game status:', status);
+			// console.log('Cannot move - game status:', status);
 			return;
 		}
 
@@ -140,7 +140,7 @@
 			const result = await gameplayService.makeMove(direction);
 
 			if (result.success && result.data?.storyCompleted) {
-				console.log('Level completed!', result.data.stats);
+				// console.log('Level completed!', result.data.stats);
 				showCompletion = true;
 				completionStats = result.data.stats;
 				gameStarted = false;
@@ -170,7 +170,7 @@
 
 		// Check if interaction is allowed
 		if (status !== 'PLAYING') {
-			console.log('Cannot interact - game status:', status);
+			// console.log('Cannot interact - game status:', status);
 			return;
 		}
 
@@ -237,13 +237,13 @@
 	}
 
 	function showSuccess(message) {
-		console.log(message);
+		// console.log(message);
 		feedbackMessage = { type: 'success', text: message, timestamp: Date.now() };
 	}
 
 	function handleHelperSelect(helper) {
 		if (status !== 'PLAYING') {
-			console.log('Cannot select helper - game not active');
+			// console.log('Cannot select helper - game not active');
 			return;
 		}
 
@@ -268,14 +268,14 @@
 
 	// Navigation functions
 	function replayLevel() {
-		console.log('Replaying level', selectedLevel);
+		// console.log('Replaying level', selectedLevel);
 		resetForNewLevel();
 	}
 
 	function playNextLevel() {
 		if (selectedLevel < 30) {
 			const nextLevel = selectedLevel + 1;
-			console.log('Going to next level:', nextLevel);
+			// console.log('Going to next level:', nextLevel);
 			// Navigate to next level URL
 			goto(`/story?level=${nextLevel}`);
 		}

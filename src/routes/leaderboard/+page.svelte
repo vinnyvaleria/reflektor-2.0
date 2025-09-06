@@ -13,11 +13,11 @@
 	$: storyEntries = formatStoryLeaderboard(leaderboard.story);
 
 	function formatFreeplayLeaderboard(data) {
-		console.log('[Leaderboard] Formatting freeplay data:', data);
+		// console.log('[Leaderboard] Formatting freeplay data:', data);
 
 		// Handle array format directly since API returns array
 		if (!Array.isArray(data)) {
-			console.log('[Leaderboard] Data is not an array, returning empty');
+			// console.log('[Leaderboard] Data is not an array, returning empty');
 			return [];
 		}
 
@@ -39,11 +39,11 @@
 	}
 
 	function formatStoryLeaderboard(data) {
-		console.log('[Leaderboard] Formatting story data:', data);
+		// console.log('[Leaderboard] Formatting story data:', data);
 
 		// Handle array format directly
 		if (!Array.isArray(data)) {
-			console.log('[Leaderboard] Data is not an array, returning empty');
+			// console.log('[Leaderboard] Data is not an array, returning empty');
 			return [];
 		}
 
@@ -68,7 +68,7 @@
 		error = null;
 		try {
 			const data = await leaderboardService.loadLeaderboard(type);
-			console.log('Leaderboard data :', data);
+			// console.log('Leaderboard data :', data);
 		} catch (err) {
 			error = `Failed to load ${type} leaderboard`;
 			console.error(err);

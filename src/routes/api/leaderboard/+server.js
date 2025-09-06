@@ -263,13 +263,13 @@ export async function POST({ request }) {
 
 		// The score is already saved in the gameSession
 		// This endpoint just confirms the submission
-		console.log(`Score submitted for session ${gameSessionId}: ${gameSession.score}`);
+		// console.log(`Score submitted for session ${gameSessionId}: ${gameSession.score}`);
 
 		return json({
 			success: true,
 			message: 'Score submitted successfully',
 			score: gameSession.score,
-			rank: null 
+			rank: null
 		});
 	} catch (error) {
 		console.error('Score submission error:', error);

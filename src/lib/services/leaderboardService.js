@@ -17,20 +17,20 @@ const leaderboardApi = {
 export const leaderboardService = {
 	async loadLeaderboard(type = 'freeplay') {
 		try {
-			console.log('[LeaderboardService] Loading leaderboard:', type);
+			// console.log('[LeaderboardService] Loading leaderboard:', type);
 
 			const result = await leaderboardApi.fetchLeaderboard(type);
 
-			console.log('[LeaderboardService] API Response:', result);
+			// console.log('[LeaderboardService] API Response:', result);
 
 			// Correctly access the leaderboard array inside result.data
 			const leaderboardData = result.data?.leaderboard || [];
 
-			console.log('[LeaderboardService] Leaderboard entries:', {
-				type: type,
-				count: leaderboardData.length,
-				data: leaderboardData
-			});
+			// console.log('[LeaderboardService] Leaderboard entries:', {
+			// 	type: type,
+			// 	count: leaderboardData.length,
+			// 	data: leaderboardData
+			// });
 
 			// Update the store based on type
 			if (type === 'freeplay') {
@@ -48,12 +48,12 @@ export const leaderboardService = {
 			}
 
 			// Verify the update
-			const currentState = get(leaderboardState);
-			console.log('[LeaderboardService] Store updated:', {
-				freeplayCount: currentState.freeplay.length,
-				storyCount: currentState.story.length,
-				lastUpdated: currentState.lastUpdated
-			});
+			// const currentState = get(leaderboardState);
+			// console.log('[LeaderboardService] Store updated:', {
+			// 	freeplayCount: currentState.freeplay.length,
+			// 	storyCount: currentState.story.length,
+			// 	lastUpdated: currentState.lastUpdated
+			// });
 
 			return leaderboardData;
 		} catch (error) {
@@ -69,11 +69,11 @@ export const leaderboardService = {
 				return;
 			}
 
-			console.log('[LeaderboardService] Submitting score for session:', gameSessionId);
+			// console.log('[LeaderboardService] Submitting score for session:', gameSessionId);
 
 			const result = await leaderboardApi.submitScore(gameSessionId);
 
-			console.log('[LeaderboardService] Submit response:', result);
+			// console.log('[LeaderboardService] Submit response:', result);
 
 			// Reload leaderboard after submission
 			// Determine which type to reload based on current game mode

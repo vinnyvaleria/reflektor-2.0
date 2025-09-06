@@ -7,27 +7,27 @@
 	$: stateData = $gameState;
 
 	onMount(() => {
-		console.log('[StoreTest] Component mounted');
-		console.log('[StoreTest] Initial state:', $gameState);
+		// console.log('[StoreTest] Component mounted');
+		// console.log('[StoreTest] Initial state:', $gameState);
 	});
 
 	// Log whenever state changes
-	$: {
-		if (stateData) {
-			console.log('[StoreTest] State updated:', {
-				hasMapData: !!stateData.mapData,
-				mapDataLength: stateData.mapData?.length,
-				hasMirroredData: !!stateData.mirroredMapData,
-				mirroredDataLength: stateData.mirroredMapData?.length,
-				position: stateData.currentPosition,
-				status: stateData.status
-			});
-		}
-	}
+	// $: {
+	// 	if (stateData) {
+	// 		console.log('[StoreTest] State updated:', {
+	// 			hasMapData: !!stateData.mapData,
+	// 			mapDataLength: stateData.mapData?.length,
+	// 			hasMirroredData: !!stateData.mirroredMapData,
+	// 			mirroredDataLength: stateData.mirroredMapData?.length,
+	// 			position: stateData.currentPosition,
+	// 			status: stateData.status
+	// 		});
+	// 	}
+	// }
 </script>
 
 <div
-	class="fixed bottom-4 left-4 z-50 max-w-sm rounded-lg bg-black p-4 font-mono text-xs text-green-400"
+	class="text-green-400 fixed bottom-4 left-4 z-50 max-w-sm rounded-lg bg-black p-4 font-mono text-xs"
 >
 	<div class="mb-2 font-bold">🔍 Store Monitor</div>
 	<div>Session: {stateData.currentSession?.id ? '✅' : '❌'}</div>

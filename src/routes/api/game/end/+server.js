@@ -50,9 +50,9 @@ export async function POST({ request }) {
 			}
 		});
 
-		console.log(
-			`Session ${gameSessionId} ended with status: ${reason}, Score: ${updatedSession.score}`
-		);
+		// console.log(
+		// 	`Session ${gameSessionId} ended with status: ${reason}, Score: ${updatedSession.score}`
+		// );
 
 		return json({
 			success: true,

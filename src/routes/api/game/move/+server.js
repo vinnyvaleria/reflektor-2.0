@@ -185,7 +185,7 @@ export async function POST({ request }) {
 
 		// Handle goal reached
 		if (bothGoalsReached) {
-			console.log(`Goal reached for session ${gameSessionId}! Mode: ${gameSession.gameMode}`);
+			// console.log(`Goal reached for session ${gameSessionId}! Mode: ${gameSession.gameMode}`);
 
 			if (gameSession.gameMode === 'FREEPLAY') {
 				// Generate next puzzle for freeplay
@@ -314,9 +314,9 @@ export async function POST({ request }) {
 					targetTime: metadata.targetTime
 				};
 
-				console.log(
-					`Story level ${gameSession.storyLevel} completed! Stars: ${stars}, Steps: ${gameSession.totalSteps}, Time: ${timeTaken}s`
-				);
+				// console.log(
+				// 	`Story level ${gameSession.storyLevel} completed! Stars: ${stars}, Steps: ${gameSession.totalSteps}, Time: ${timeTaken}s`
+				// );
 			}
 		}
 

@@ -17,22 +17,22 @@ const gameplayApi = {
 	async move(gameSessionId, direction, helperTool = null) {
 		const body = { gameSessionId, direction, helperTool };
 
-		console.log('Making move:', { gameSessionId, direction, helperTool });
+		// console.log('Making move:', { gameSessionId, direction, helperTool });
 
 		try {
 			const response = await apiPost('/api/game/move', body, 'Game movement fails');
 
-			console.log('API Response:', response);
+			// console.log('API Response:', response);
 
 			// FIX: The response has double-nested data structure
 			// response.data.data contains the actual game data
 			if (response.success && response.data) {
 				// Extract the actual data from the double-nested structure
 				const actualData = response.data.data || response.data;
-				console.log('Move successful, actual data:', actualData);
+				// console.log('Move successful, actual data:', actualData);
 				return { success: true, data: actualData };
 			} else {
-				console.log('Move failed:', response);
+				// console.log('Move failed:', response);
 				return {
 					success: false,
 					data: response.data?.data || response.data,
@@ -65,15 +65,15 @@ export const gameplayService = {
 
 			// Check if game is already completed
 			if ($gameState.status !== 'PLAYING') {
-				console.log('Game is not active, cannot move. Current status:', $gameState.status);
+				// console.log('Game is not active, cannot move. Current status:', $gameState.status);
 				return { success: false, reason: 'Game is not active' };
 			}
 
-			console.log('Making move:', {
-				sessionId: $gameState.currentSession.id,
-				direction,
-				currentPos: $gameState.currentPosition
-			});
+			// console.log('Making move:', {
+			// 	sessionId: $gameState.currentSession.id,
+			// 	direction,
+			// 	currentPos: $gameState.currentPosition
+			// });
 
 			const result = await gameplayApi.move($gameState.currentSession.id, direction, helperTool);
 
@@ -81,12 +81,12 @@ export const gameplayService = {
 				const data = result.data;
 
 				// Now data should have the correct structure
-				console.log('Move data received:', {
-					hasGameSession: !!data.gameSession,
-					hasNewPosition: !!data.newPosition,
-					hasMapData: !!data.mapData,
-					hasMirroredMapData: !!data.mirroredMapData
-				});
+				// console.log('Move data received:', {
+				// 	hasGameSession: !!data.gameSession,
+				// 	hasNewPosition: !!data.newPosition,
+				// 	hasMapData: !!data.mapData,
+				// 	hasMirroredMapData: !!data.mirroredMapData
+				// });
 
 				// Update the game state with the new data
 				gameState.update((state) => ({
@@ -100,9 +100,9 @@ export const gameplayService = {
 					levelMetadata: data.gameSession?.currentPuzzle?.metadata || state.levelMetadata
 				}));
 
-				console.log('Position updated to:', data.newPosition);
-				console.log('Goal reached:', data.goalReached);
-				console.log('Current game status:', get(gameState).status);
+				// console.log('Position updated to:', data.newPosition);
+				// console.log('Goal reached:', data.goalReached);
+				// console.log('Current game status:', get(gameState).status);
 
 				// Handle obstacle removal with helper
 				if (data.obstacleRemoved && helperTool) {
@@ -117,7 +117,7 @@ export const gameplayService = {
 
 				// Handle next puzzle in freeplay
 				if (data.nextPuzzle) {
-					console.log(`Puzzle completed! Total: ${data.gameSession.puzzlesCompleted}`);
+					// console.log(`Puzzle completed! Total: ${data.gameSession.puzzlesCompleted}`);
 
 					// Reset helpers for new puzzle
 					sessionService.resetHelpers();
@@ -132,7 +132,7 @@ export const gameplayService = {
 
 				// Handle story mode completion
 				if (data.storyCompleted) {
-					console.log('Story level completed!', data.stats);
+					// console.log('Story level completed!', data.stats);
 
 					gameState.update((state) => ({
 						...state,
@@ -155,7 +155,7 @@ export const gameplayService = {
 
 				// Handle goal reached but not yet completed (waiting for backend confirmation)
 				if (data.goalReached && !data.nextPuzzle && !data.storyCompleted) {
-					console.log('Goal reached! Waiting for completion confirmation...');
+					// console.log('Goal reached! Waiting for completion confirmation...');
 
 					// Update status to prevent further moves
 					gameState.update((state) => ({
@@ -167,7 +167,7 @@ export const gameplayService = {
 				return { success: true, data: data };
 			} else {
 				// Move failed (collision)
-				console.log('Move failed:', result.reason);
+				// console.log('Move failed:', result.reason);
 
 				// Still update session info if provided
 				if (result.data?.gameSession) {
@@ -203,7 +203,7 @@ export const gameplayService = {
 
 		// Don't allow helper selection if game is not active
 		if ($gameState.status !== 'PLAYING') {
-			console.log('Cannot select helper - game is not active');
+			// console.log('Cannot select helper - game is not active');
 			return;
 		}
 
@@ -246,7 +246,7 @@ export const gameplayService = {
 					reason: reason
 				});
 
-				console.log('[GameplayService] Session ended:', response);
+				// console.log('[GameplayService] Session ended:', response);
 			} catch (error) {
 				console.error('[GameplayService] Failed to update backend session status:', error);
 			}
