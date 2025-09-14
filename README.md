@@ -4,6 +4,8 @@
 
 ![Reflektor Gameplay](/src//lib/assets/images/game-image.png)
 
+Live Game URL : https://reflektor-2-0.vercel.app/freeplay
+
 ## 🎯 Project Overview
 
 **Reflektor 2.0** represents a complete evolution from the original HTML/CSS/JavaScript prototype to a full-featured web application with user authentication, database persistence, multiple game modes, and competitive leaderboards. The game challenges players to think about spatial patterns and movement while managing mirrored grid logic.
@@ -221,25 +223,7 @@ npm run deploy:prod      # Deploy to production
 - ✅ **Helper Tool System** - Strategic obstacle removal
 - ✅ **Pixel Art Styling** - Retro game aesthetics
 
-## 🚀 Deployment
-
-### Environment Setup
-
-1. Set up a Neon PostgreSQL database
-2. Configure environment variables for production
-3. Update `DATABASE_URL` to point to your production database
-
-### Vercel Deployment
-
-```bash
-# Quick deploy
-npm run deploy
-
-# Production deployment
-npm run deploy:prod
-```
-
-### Environment Variables (Production)
+## 🚀 Environment Variables (Production)
 
 ```env
 DATABASE_URL="postgresql://..."  # Neon database URL
